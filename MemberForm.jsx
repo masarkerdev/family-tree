@@ -34,11 +34,24 @@ export default function MemberForm({ id, preset }) {
         .then(({ data }) => setPhone(data?.phone || ''))
   }, [id]) // eslint-disable-line
 
-  // বাবা বেছে নিলে তাঁর স্ত্রী থাকলে মা হিসেবে প্রস্তাব; একজনই স্ত্রী থাকলে নিজে থেকে বসে যায়
-  const fatherWives = f.father_id ? fam.spouses(f.father_id) : []
+  // বাবা বাছলে মা, আর মা বাছলে বাবা নিজে থেকে বসে যায়।
+  // উৎস: (১) বিয়ের সম্পর্ক, (২) তাঁর অন্য সন্তানদের বাবা/মা — দুটো মিলিয়ে একজনই পাওয়া গেলে বসিয়ে দেয়
+  const uniq = arr => [...new Set(arr.filter(Boolean))]
+  const motherOptions = f.father_id ? uniq([
+    ...fam.spouses(f.father_id).map(w => w.id),
+    ...fam.kids(f.father_id).filter(k => k.id !== id && k.father_id === f.father_id).map(k => k.mother_id),
+  ]).map(x => fam.byId.get(x)).filter(Boolean) : []
+  const fatherOptions = f.mother_id ? uniq([
+    ...fam.spouses(f.mother_id).map(h => h.id),
+    ...fam.kids(f.mother_id).filter(k => k.id !== id && k.mother_id === f.mother_id).map(k => k.father_id),
+  ]).map(x => fam.byId.get(x)).filter(Boolean) : []
   useEffect(() => {
-    if (f.father_id && !f.mother_id && fatherWives.length === 1) set('mother_id', fatherWives[0].id)
-  }, [f.father_id, fatherWives.length]) // eslint-disable-line
+    if (f.father_id && !f.mother_id && motherOptions.length === 1) set('mother_id', motherOptions[0].id)
+  }, [f.father_id, motherOptions.length]) // eslint-disable-line
+  useEffect(() => {
+    if (f.mother_id && !f.father_id && fatherOptions.length === 1) set('father_id', fatherOptions[0].id)
+  }, [f.mother_id, fatherOptions.length]) // eslint-disable-line
+  const married = (h, w) => fam.spouses(h).some(x => x.id === w)
 
   // তালিকায় না থাকা বাবা/মা/স্বামী/স্ত্রীকে সেখান থেকেই যোগ করা (বাইরের পরিবারের মানুষ হিসেবে)
   async function quickAdd(name, gender, partnerId) {
@@ -90,6 +103,11 @@ export default function MemberForm({ id, preset }) {
         const { error } = await sb.from('member_private').upsert({ member_id: mid, phone: phone || null })
         if (error) throw error
       }
+      // বাবা ও মা দুজনই দেওয়া থাকলে তাঁদের স্বামী-স্ত্রী হিসেবে জুড়ে দেয়, পরের সন্তানে মা নিজে থেকে আসবে
+      if (isAdmin && canTree && f.father_id && f.mother_id && !married(f.father_id, f.mother_id)) {
+        const { error } = await sb.from('marriages').insert({ husband_id: f.father_id, wife_id: f.mother_id })
+        if (error && error.code !== '23505') throw error
+      }
       if (isAdmin && spouse) {
         const pair = f.gender === 'female' ? { husband_id: spouse, wife_id: mid } : { husband_id: mid, wife_id: spouse }
         const { error } = await sb.from('marriages').insert(pair)
@@ -128,12 +146,15 @@ export default function MemberForm({ id, preset }) {
       {canTree ? (
         <fieldset>
           <legend>বাবা-মা</legend>
-          <label>বাবা<PersonPicker value={f.father_id} onChange={v => set('father_id', v)} filter={m => m.gender === 'male' && m.id !== id}
+          <label>বাবা<PersonPicker value={f.father_id} onChange={v => set('father_id', v)} filter={m => m.id !== id && (m.gender !== 'female' || !m.in_lineage)}
             onCreate={name => quickAdd(name, 'male', f.mother_id)} createLabel="তালিকায় নেই এমন বাবা, যেমন জামাই (বাইরের পরিবার হিসেবে যোগ হবে)" /></label>
-          <label>মা<PersonPicker value={f.mother_id} onChange={v => set('mother_id', v)} filter={m => m.gender === 'female' && m.id !== id}
+          <label>মা<PersonPicker value={f.mother_id} onChange={v => set('mother_id', v)} filter={m => m.id !== id && (m.gender !== 'male' || !m.in_lineage)}
             onCreate={name => quickAdd(name, 'female', f.father_id)} createLabel={f.father_id ? `বাইরের পরিবার থেকে আসা মা হিসেবে যোগ হবে, ${fam.byId.get(f.father_id)?.name}-এর স্ত্রী হিসেবেও জুড়ে যাবে` : 'বাইরের পরিবার থেকে আসা মা হিসেবে যোগ হবে'} /></label>
-          {!f.mother_id && fatherWives.length > 0 && (
-            <p className="small">মা কি এঁদের কেউ? {fatherWives.map(w => <button type="button" key={w.id} className="chip" onClick={() => set('mother_id', w.id)}>{w.name}</button>)}</p>
+          {!f.mother_id && motherOptions.length > 1 && (
+            <p className="small">মা কে? {motherOptions.map(w => <button type="button" key={w.id} className="chip" onClick={() => set('mother_id', w.id)}>{w.name}</button>)}</p>
+          )}
+          {!f.father_id && fatherOptions.length > 1 && (
+            <p className="small">বাবা কে? {fatherOptions.map(h => <button type="button" key={h.id} className="chip" onClick={() => set('father_id', h.id)}>{h.name}</button>)}</p>
           )}
           <p className="muted small">তালিকায় না থাকলে নাম লিখে "নতুন হিসেবে যোগ করুন" চাপুন। মেয়ের ঘরের সন্তান হলে মা হিসেবে বংশের মেয়েকে বেছে নিন, বাবা হিসেবে জামাইয়ের নাম লিখে যোগ করুন।</p>
         </fieldset>
