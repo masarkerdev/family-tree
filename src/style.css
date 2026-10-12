@@ -4,11 +4,9 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1f1d; --fg: #e6f3ef; --mut: #8fb0a9; --card: #15302d; --line: #2f6a5f; --soft: #1c3a36;
-    --pri: #3fc2a8; color-scheme: dark;
-  }
+  :root:not([data-theme="light"]) { --bg: #0d1f1d; --fg: #e6f3ef; --mut: #8fb0a9; --card: #15302d; --line: #2f6a5f; --soft: #1c3a36; --pri: #3fc2a8; color-scheme: dark; }
 }
+:root[data-theme="dark"] { --bg: #0d1f1d; --fg: #e6f3ef; --mut: #8fb0a9; --card: #15302d; --line: #2f6a5f; --soft: #1c3a36; --pri: #3fc2a8; color-scheme: dark; }
 * { box-sizing: border-box }
 html { scroll-padding-top: 70px }
 body {
@@ -223,6 +221,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .pp-list button:hover { background: var(--soft) }
 .pp-list span, .picked span { display: flex; flex-direction: column; min-width: 0 }
 .pp-list small, .picked small { color: var(--mut); font-size: 12px }
+.pp-new { border-top: 1px dashed var(--line) !important; margin-top: 2px }
+.pp-plus { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--pri); color: #fff; font-weight: 700 }
 .picked { display: flex; gap: 10px; align-items: center; margin-top: 4px; padding: 6px 10px; background: var(--soft); border-radius: 12px; color: var(--fg) }
 .picked .x { margin-left: auto; border: 0; background: none; cursor: pointer; color: var(--bad); font-size: 16px }
 .quote-edit { border-bottom: 1px solid var(--line); padding: 8px 0 12px }
