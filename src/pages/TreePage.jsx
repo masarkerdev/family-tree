@@ -53,7 +53,7 @@ export default function TreePage() {
       )}
 
       <p className="muted small">মোট {bn(fam.members.length)} জন · {bn(fam.maxGen)} প্রজন্ম</p>
-      <Tree key={ver} live pzRef={pz} rootIds={fam.roots.map(r => r.id)} openDepth={depth} path={path} onPick={pick} />
+      <Tree key={ver} live pzRef={pz} rootIds={fam.roots.map(r => r.id)} openDepth={depth} path={path} onPick={id => { pick(id); open(id) }} />
     </div>
   )
 }
