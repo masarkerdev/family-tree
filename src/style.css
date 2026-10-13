@@ -406,3 +406,24 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .kid small { color: var(--mut); font-size: 12px }
 .kid.dead .av, .kid.dead .av-img { filter: grayscale(.6) }
 .desc-tree .pz { height: min(64vh, 640px) }
+
+/* ---------- খেলা ---------- */
+.game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px }
+.game-card { display: flex; flex-direction: column; gap: 6px; text-align: left; cursor: pointer; border: 0; color: var(--fg); font: inherit; margin: 0; transition: transform .15s }
+.game-card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 2px var(--pri) }
+.gc-icon { font-size: 34px; line-height: 1 }
+.game-card b { font-family: 'Anek Bangla', sans-serif; font-size: 20px }
+.game-card small { color: var(--mut); line-height: 1.5 }
+.gc-go { margin-top: auto; color: var(--pri); font-weight: 600 }
+.game-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
+.progress { height: 6px; border-radius: 99px; background: var(--soft); margin: 10px 0 4px; overflow: hidden }
+.progress span { display: block; height: 100%; background: var(--gold); transition: width .3s }
+.opts { display: grid; gap: 0 }
+.opt.picked { box-shadow: inset 0 0 0 3px var(--pri); background: var(--soft) }
+.opt.faded { opacity: .55 }
+.opt:disabled { cursor: default }
+.q-img { display: block; max-width: 100%; max-height: 280px; margin: 0 auto 10px; border-radius: 16px; object-fit: contain }
+.big-score { font-family: 'Anek Bangla', sans-serif; font-size: 30px; font-weight: 800; color: var(--pri); margin: 6px 0 }
+.pair-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.pair-cols .opt { font-size: 14px }
+@media (max-width: 480px) { .pair-cols .opt { padding: 8px } .pair-cols .opt .av, .pair-cols .opt .av-img { display: none } }
