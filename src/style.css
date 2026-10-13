@@ -348,3 +348,19 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .m-pics h3 { font-size: 18px; margin: 14px 0 6px }
 .m-pics-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px }
 .m-pics-row img { width: 96px; height: 96px; object-fit: cover; border-radius: 12px; display: block }
+
+/* ---------- হোম: পরিসংখ্যান ---------- */
+.stat-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+@media (max-width: 560px) { .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+.stat { background: var(--card); border-radius: 18px; padding: 14px 16px; box-shadow: inset 0 0 0 2px var(--line) }
+.stat b { display: block; font-family: 'Anek Bangla', sans-serif; font-size: 34px; line-height: 1.1; color: var(--pri); font-variant-numeric: tabular-nums }
+.stat span { color: var(--mut); font-size: 14px }
+.ages h3 { margin-bottom: 12px }
+.age-rows { display: grid; gap: 8px }
+.age-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) 64px; align-items: center; gap: 10px; border-radius: 8px }
+.age-row:hover { background: var(--soft) }
+.age-l { font-size: 14px; color: var(--fg) }
+.age-n { font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; color: var(--fg) }
+.age-track { height: 14px; border-radius: 4px; background: var(--soft); overflow: hidden }
+.age-bar { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--pri); transition: width .4s }
+@media (prefers-reduced-motion: reduce) { .age-bar { transition: none } }

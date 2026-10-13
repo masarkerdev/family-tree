@@ -7,8 +7,29 @@ export default function Home() {
   const { fam, content, open } = useApp()
   const A = fam.members.filter(m => m.status === 'approved')
   const t = today(), dn = dayNo()
-  const root = fam.roots[0]
+  // পূর্বপুরুষ পেইজের মতোই: সবচেয়ে বড় গাছের প্রথম পুরুষ আর তাঁর বংশধররা (বউ/জামাই বাদে)
+  const root = [...fam.roots].sort((a, b) => fam.descendants(b.id).size - fam.descendants(a.id).size)[0]
   const branches = root ? fam.treeKids(root.id) : []
+  const lineage = root ? [...fam.descendants(root.id)].map(id => fam.byId.get(id)).filter(Boolean) : []
+
+  // পরিসংখ্যান
+  const males = lineage.filter(m => m.gender === 'male').length
+  const females = lineage.filter(m => m.gender === 'female').length
+  const dead = lineage.filter(m => m.is_deceased).length
+  const living = lineage.filter(m => !m.is_deceased)
+  const ageOf = m => {
+    if (m.birth_date) {
+      const [y, mo, d] = m.birth_date.split('-').map(Number)
+      return t.y - y - ((t.m < mo || (t.m === mo && t.d < d)) ? 1 : 0)
+    }
+    const y = birthYear(m)
+    return y ? t.y - y : null
+  }
+  const AGE = [[0, 15, '১–১৫'], [16, 30, '১৬–৩০'], [31, 45, '৩১–৪৫'], [46, 60, '৪৬–৬০'], [61, 75, '৬১–৭৫'], [76, 90, '৭৬–৯০'], [91, Infinity, '৯১–১০০+']]
+  const ages = living.map(ageOf)
+  const ageRows = AGE.map(([lo, hi, label]) => ({ label, n: ages.filter(a => a !== null && a >= lo && a <= hi).length }))
+  const noAge = ages.filter(a => a === null || a < 0).length
+  const ageMax = Math.max(1, ...ageRows.map(r => r.n))
 
   const dayOf = d => +d.slice(8, 10), monOf = d => +d.slice(5, 7)
   const birthdays = A.filter(m => !m.is_deceased && m.birth_date && monOf(m.birth_date) === t.m)
@@ -35,7 +56,7 @@ export default function Home() {
         <h1>সরকার বংশ</h1>
         <p className="place">অলুয়া · ব্রাহ্মণপাড়া · কুমিল্লা</p>
         <div className="stats">
-          <div><b>{bn(A.length)}</b><span>সদস্য</span></div>
+          <div><b>{bn(lineage.length)}</b><span>বংশধর</span></div>
           <div><b>{bn(fam.maxGen)}</b><span>প্রজন্ম</span></div>
           <div><b>{bn(branches.length)}</b><span>শাখা</span></div>
         </div>
@@ -64,6 +85,28 @@ export default function Home() {
             <h3>{amal}</h3>
           </div>
         )}
+
+        <h2 className="sec">পরিসংখ্যান</h2>
+        <p className="muted small">শুধু বংশধরদের হিসাব, বিয়ের সূত্রে আসা বউ বা স্বামী এতে নেই।</p>
+        <div className="stat-tiles">
+          <div className="stat"><b>{bn(males)}</b><span>পুরুষ</span></div>
+          <div className="stat"><b>{bn(females)}</b><span>মহিলা</span></div>
+          <div className="stat"><b>{bn(living.length)}</b><span>জীবিত</span></div>
+          <div className="stat"><b>{bn(dead)}</b><span>প্রয়াত</span></div>
+        </div>
+        <div className="card ages">
+          <h3>বয়স অনুযায়ী জীবিত সদস্য</h3>
+          <div className="age-rows" role="table" aria-label="বয়স অনুযায়ী জীবিত সদস্য">
+            {ageRows.map(r => (
+              <div key={r.label} className="age-row" role="row" title={`${r.label} বছর: ${bn(r.n)} জন`}>
+                <span className="age-l" role="cell">{r.label} বছর</span>
+                <span className="age-track" role="cell" aria-hidden="true"><span className="age-bar" style={{ width: r.n ? `${(r.n / ageMax) * 100}%` : 0 }} /></span>
+                <span className="age-n" role="cell">{bn(r.n)} জন</span>
+              </div>
+            ))}
+          </div>
+          {noAge > 0 && <p className="muted small">আরও {bn(noAge)} জন জীবিত সদস্যের জন্মসাল দেওয়া নেই। সদস্যের পেইজে জন্মসাল যোগ করলে এখানে হিসাবে আসবে।</p>}
+        </div>
 
         <div className="grid">
           <div className="card">
