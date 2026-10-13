@@ -125,7 +125,7 @@ function PersonSelect({ id, value, onChange, label }) {
 }
 
 function Relation() {
-  const { fam, open } = useApp()
+  const { fam } = useApp()
   const kin = useMemo(() => makeKinship(fam), [fam])
   const [a, setA] = useState(null), [b, setB] = useState(null)
   const A = a && fam.byId.get(a), B = b && fam.byId.get(b)
@@ -144,16 +144,6 @@ function Relation() {
             <>
               <p>{line(A, B, ab)}</p>
               {ba && <p>{line(B, A, ba)}</p>}
-              {ab.chain.length > 2 && (
-                <div className="rel-chain">
-                  {ab.chain.map((m, i) => (
-                    <span key={m.id + i} className="trail-step">
-                      {i > 0 && <span className="trail-arrow" aria-hidden="true">→</span>}
-                      <button className="chip" onClick={() => open(m.id)}><Avatar m={m} size={22} />{m.name}</button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </>
           ) : <p>এই দুজনের কোনো সম্পর্ক এখনো বংশতালিকায় খুঁজে পাওয়া যায়নি। হয়তো কারো বাবা-মা যোগ করা বাকি।</p>}
         </div>
