@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useApp } from '../ctx'
 import { bn, shuffle, store } from '../lib/util'
 import Avatar from '../components/Avatar'
 import PersonPicker from '../components/PersonPicker'
 import { play } from '../lib/sound'
+import { makeKinship, poss } from '../lib/kinship'
 
 // বংশতালিকা থেকে নিজে নিজে প্রশ্ন বানায়
 function makeQuestions(fam) {
@@ -96,16 +97,67 @@ function Quiz() {
   )
 }
 
-function Relation() {
+// ড্রপডাউন: বংশের মানুষ আগে (নাম অনুযায়ী), বিয়ের সূত্রে আসা মানুষ আলাদা ভাগে
+function PersonSelect({ id, value, onChange, label }) {
   const { fam } = useApp()
+  const groups = useMemo(() => {
+    const byName = (x, y) => x.name.localeCompare(y.name, 'bn')
+    const opt = m => {
+      const f = fam.byId.get(m.father_id) || fam.byId.get(m.mother_id)
+      return { id: m.id, text: f ? `${m.name} — ${M(f) ? 'পিতা' : 'মাতা'}: ${f.name}` : m.name }
+    }
+    const M = p => p.gender !== 'female'
+    return [
+      ['বংশের সদস্য', fam.members.filter(m => m.in_lineage).sort(byName).map(opt)],
+      ['বিয়ের সূত্রে আত্মীয়', fam.members.filter(m => !m.in_lineage).sort(byName).map(opt)],
+    ].filter(g => g[1].length)
+  }, [fam])
+  return (
+    <label htmlFor={id}>{label}
+      <select id={id} className="psel" value={value || ''} onChange={e => onChange(e.target.value || null)}>
+        <option value="">— নাম বাছুন —</option>
+        {groups.map(([g, list]) => (
+          <optgroup key={g} label={g}>{list.map(o => <option key={o.id} value={o.id}>{o.text}</option>)}</optgroup>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function Relation() {
+  const { fam, open } = useApp()
+  const kin = useMemo(() => makeKinship(fam), [fam])
   const [a, setA] = useState(null), [b, setB] = useState(null)
+  const A = a && fam.byId.get(a), B = b && fam.byId.get(b)
+  const ab = A && B ? kin.relate(a, b) : null   // B হলেন A-এর …
+  const ba = A && B ? kin.relate(b, a) : null   // A হলেন B-এর …
+  const line = (x, y, r) => <>{y.name} হলেন {poss(x.name)} <b>{r.term}</b>{r.alt && <> (সম্পর্কে {r.alt})</>}</>
   return (
     <div className="card game rel">
       <h2>🧬 আমাদের সম্পর্ক কী?</h2>
-      <p>যেকোনো দুজনকে বেছে নিন — বাবা ও মা দুই দিক খুঁজে সম্পর্ক বলে দেবে।</p>
-      <label>প্রথম জন<PersonPicker value={a} onChange={setA} /></label>
-      <label>দ্বিতীয় জন<PersonPicker value={b} onChange={setB} /></label>
-      {a && b && <p className="rel-out">{fam.relation(a, b)}</p>}
+      <p>যেকোনো দুজনকে বেছে নিন। বাবা ও মা দুই দিক, আর বিয়ের সূত্রও খুঁজে সম্পর্কের নাম বলে দেবে।</p>
+      <PersonSelect id="rel-a" label="প্রথম জন" value={a} onChange={setA} />
+      <PersonSelect id="rel-b" label="দ্বিতীয় জন" value={b} onChange={setB} />
+      {A && B && (
+        <div className="rel-out">
+          {a === b ? <p>একই মানুষ! 😄</p> : ab ? (
+            <>
+              <p>{line(A, B, ab)}</p>
+              {ba && <p>{line(B, A, ba)}</p>}
+              {ab.chain.length > 2 && (
+                <div className="rel-chain">
+                  {ab.chain.map((m, i) => (
+                    <span key={m.id + i} className="trail-step">
+                      {i > 0 && <span className="trail-arrow" aria-hidden="true">→</span>}
+                      <button className="chip" onClick={() => open(m.id)}><Avatar m={m} size={22} />{m.name}</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : <p>এই দুজনের কোনো সম্পর্ক এখনো বংশতালিকায় খুঁজে পাওয়া যায়নি। হয়তো কারো বাবা-মা যোগ করা বাকি।</p>}
+        </div>
+      )}
     </div>
   )
 }
