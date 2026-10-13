@@ -1,6 +1,9 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './style.css'
+import { installClickSounds } from './lib/sound'
+
+installClickSounds()
 
 const root = createRoot(document.getElementById('root'))
 

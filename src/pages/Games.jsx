@@ -3,6 +3,7 @@ import { useApp } from '../ctx'
 import { bn, shuffle, store } from '../lib/util'
 import Avatar from '../components/Avatar'
 import PersonPicker from '../components/PersonPicker'
+import { play } from '../lib/sound'
 
 // বংশতালিকা থেকে নিজে নিজে প্রশ্ন বানায়
 function makeQuestions(fam) {
@@ -70,6 +71,7 @@ function Quiz() {
   const choose = p => {
     if (Q.pick) return
     const ok = p.id === x.a.id
+    play(ok ? 'ok' : 'bad')
     if (ok) { const n = pts + 10; setPts(n); store('pts', n) }
     setQ({ ...Q, pick: p.id, score: Q.score + (ok ? 1 : 0) })
   }
@@ -78,7 +80,7 @@ function Quiz() {
       <small className="muted">প্রশ্ন {bn(Q.i + 1)}/{bn(Q.list.length)} · পয়েন্ট {bn(pts)}</small>
       <h3 className="q">{x.q}</h3>
       {x.opts.map(p => (
-        <button key={p.id} onClick={() => choose(p)}
+        <button key={p.id} data-sound="none" onClick={() => choose(p)}
           className={'opt' + (Q.pick ? (p.id === x.a.id ? ' ok' : p.id === Q.pick ? ' bad' : '') : '')}>
           <Avatar m={p} size={36} />{p.name}
         </button>
@@ -86,7 +88,7 @@ function Quiz() {
       {Q.pick && (
         <div className="fb">
           <p>{Q.pick === x.a.id ? 'ঠিক! 🎉' : 'আরেকটু হলেই হতো 😅 সঠিক উত্তর সবুজ রঙে।'}</p>
-          <button className="btn" onClick={() => setQ({ ...Q, i: Q.i + 1, pick: null })}>{Q.i + 1 < Q.list.length ? 'পরের প্রশ্ন' : 'ফলাফল দেখুন'}</button>{' '}
+          <button className="btn" data-sound={Q.i + 1 < Q.list.length ? 'click' : 'win'} onClick={() => setQ({ ...Q, i: Q.i + 1, pick: null })}>{Q.i + 1 < Q.list.length ? 'পরের প্রশ্ন' : 'ফলাফল দেখুন'}</button>{' '}
           <button className="btn soft" onClick={() => open(x.a.id)}>{x.a.name}-এর পেইজ</button>
         </div>
       )}

@@ -1,5 +1,7 @@
 import { sb } from '../supabase'
+import { useState } from 'react'
 import { useApp } from '../ctx'
+import { soundOn, setSoundOn, play } from '../lib/sound'
 
 const LINKS = [
   ['', 'হোম'], ['ancestors', 'পূর্বপুরুষ'], ['tree', 'বংশবৃক্ষ'],
@@ -8,6 +10,8 @@ const LINKS = [
 
 export default function Nav({ page }) {
   const c = useApp()
+  const [snd, setSnd] = useState(soundOn())
+  const toggle = () => { const v = !snd; setSoundOn(v); setSnd(v); if (v) play('open') }
   const pendingCount = c.isAdmin ? c.fam.members.filter(m => m.status === 'pending').length : 0
   return (
     <nav className="nav">
@@ -19,6 +23,8 @@ export default function Nav({ page }) {
         {c.isAdmin && <a href="#/admin" className={page === 'admin' ? 'act' : ''}>এডমিন{pendingCount > 0 && <b className="dot">{pendingCount}</b>}</a>}
       </div>
       <div className="who">
+        <button className="btn sm soft snd" data-sound="none" onClick={toggle} aria-pressed={snd}
+          title={snd ? 'ক্লিকের শব্দ বন্ধ করুন' : 'ক্লিকের শব্দ চালু করুন'} aria-label={snd ? 'শব্দ বন্ধ করুন' : 'শব্দ চালু করুন'}>{snd ? '🔊' : '🔇'}</button>
         {c.session ? (
           <>
             {c.me
