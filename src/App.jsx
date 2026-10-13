@@ -15,6 +15,8 @@ import Memorial from './pages/Memorial'
 import Games from './pages/Games'
 import Admin from './pages/Admin'
 import FamilyPrint from './pages/FamilyPrint'
+import Roots from './pages/Roots'
+import Album from './pages/Album'
 
 function useHash() {
   const [h, setH] = useState(location.hash || '#/')
@@ -53,6 +55,7 @@ export default function App() {
   const [sheet, setSheet] = useState(null) // {mode:'show'|'edit'|'new'|'join', id, preset}
   const [auth, setAuth] = useState(false)
   const [claims, setClaims] = useState([])
+  const [album, setAlbum] = useState({ photos: [], tags: [], ready: false })
 
   const reload = useCallback(async () => {
     try {
@@ -61,6 +64,15 @@ export default function App() {
       setErr('')
     } catch (e) { setErr(e.message) }
     setLoading(false)
+  }, [])
+
+  // অ্যালবাম আলাদাভাবে আনা হয় — album.sql না চালানো থাকলেও বাকি সাইট চলবে
+  const reloadPhotos = useCallback(async () => {
+    try {
+      const [photos, tags] = await Promise.all([fetchAll('photos'), fetchAll('photo_tags')])
+      photos.sort((a, b) => (b.year || 0) - (a.year || 0) || String(b.created_at).localeCompare(String(a.created_at)))
+      setAlbum({ photos, tags, ready: true })
+    } catch { setAlbum({ photos: [], tags: [], ready: false }) }
   }, [])
 
   const reloadClaims = useCallback(async () => {
@@ -79,11 +91,12 @@ export default function App() {
   useEffect(() => {
     reload()
     reloadClaims()
+    reloadPhotos()
     if (session)
       sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle()
         .then(({ data }) => setRole(data?.role === 'admin' ? 'admin' : 'member'))
     else setRole('visitor')
-  }, [session, reload, reloadClaims])
+  }, [session, reload, reloadClaims, reloadPhotos])
 
   // শেয়ার করা লিংক (#/m/<id>) খুললে সেই সদস্যের পেইজ
   useEffect(() => { if (page === 'm' && arg) setSheet({ mode: 'show', id: arg }) }, [page, arg])
@@ -91,6 +104,11 @@ export default function App() {
   const fam = useMemo(() => buildFamily(data.members, data.marriages), [data])
   const uid = session?.user.id
   const me = uid ? data.members.find(m => m.user_id === uid) : null
+  const photos = useMemo(() => {
+    const by = new Map()
+    for (const t of album.tags) { if (!by.has(t.photo_id)) by.set(t.photo_id, []); by.get(t.photo_id).push(t.member_id) }
+    return album.photos.map(p => ({ ...p, tags: by.get(p.id) || [] }))
+  }, [album])
 
   const close = useCallback(() => {
     setSheet(null)
@@ -99,7 +117,7 @@ export default function App() {
 
   const ctx = {
     fam, session, uid, me, role, isAdmin: role === 'admin', content: data.content, claims,
-    reload, reloadClaims, close,
+    reload, reloadClaims, close, photos, albumReady: album.ready, reloadPhotos,
     open: id => setSheet({ mode: 'show', id }),
     edit: id => setSheet({ mode: 'edit', id }),
     addNew: preset => (session ? setSheet({ mode: 'new', preset }) : setAuth(true)),
@@ -116,6 +134,8 @@ export default function App() {
   else if (page === 'games') body = <Games />
   else if (page === 'admin') body = <Admin />
   else if (page === 'family') body = <FamilyPrint id={arg} />
+  else if (page === 'roots') body = <Roots id={arg} />
+  else if (page === 'album') body = <Album photoId={arg} />
   else body = <Home />
 
   return (

@@ -31,6 +31,7 @@ export default function MemberSheet({ id }) {
   const myClaim = c.claims.find(x => x.member_id === id)
   const canClaim = session && !c.me && !m.user_id && !myClaim && m.status === 'approved'
   const code = fam.code(m)
+  const pics = (c.photos || []).filter(p => p.status === 'approved' && p.tags.includes(id))
 
   const Chip = ({ p }) => (
     <button className="chip" onClick={() => c.open(p.id)}><Avatar m={p} size={24} />{p.name}</button>
@@ -110,8 +111,20 @@ export default function MemberSheet({ id }) {
         {m.is_deceased && m.dua_count > 0 && <Row l="দোয়া">🤲 {bn(m.dua_count)} বার</Row>}
       </div>
 
+      {pics.length > 0 && (
+        <div className="m-pics">
+          <h3>ছবিতে · {bn(pics.length)}টি</h3>
+          <div className="m-pics-row">
+            {pics.slice(0, 12).map(p => (
+              <a key={p.id} href={`#/album/${p.id}`} onClick={c.close}><img src={p.url} alt={p.caption || ''} loading="lazy" /></a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="actions">
         {canEdit && <button className="btn" onClick={() => c.edit(id)}>✏️ সম্পাদনা</button>}
+        <a className="btn soft" href={`#/roots/${id}`} onClick={c.close}>🌱 শিকড় কার্ড</a>
         {canEdit && <>
           <button className="btn soft" disabled={busy === 'ph'} onClick={() => fileRef.current.click()}>{busy === 'ph' ? 'আপলোড হচ্ছে…' : '📷 ছবি দিন'}</button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={photo} />

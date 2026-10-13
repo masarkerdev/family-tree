@@ -149,8 +149,18 @@ export function buildFamily(members, marriages) {
 
   const maxGen = roots.length ? Math.max(...roots.map(r => generations(r.id))) : 0
 
+  // গাছে কার নিচে বসেছেন (বংশের বাবা, না থাকলে বংশের মা)
+  const treeParent = id => byId.get(primOf.get(id)) || null
+  // নিজের থেকে বংশের প্রথম পুরুষ পর্যন্ত পথ: [নিজে, বাবা/মা, দাদা/নানা, …]
+  function rootPath(id) {
+    const out = [], seen = new Set()
+    let x = byId.get(id)
+    while (x && !seen.has(x.id)) { seen.add(x.id); out.push(x); x = treeParent(x.id) }
+    return out
+  }
+
   return {
     members, byId, roots, kids, treeKids, spouses, parents, code, descendants, generations,
-    branchOf, branchHue, sub, kidCount, relation, maxGen,
+    branchOf, branchHue, sub, kidCount, relation, maxGen, treeParent, rootPath,
   }
 }

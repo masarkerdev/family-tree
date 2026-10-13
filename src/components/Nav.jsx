@@ -4,8 +4,8 @@ import { useApp } from '../ctx'
 import { soundOn, setSoundOn, play } from '../lib/sound'
 
 const LINKS = [
-  ['', 'হোম'], ['ancestors', 'পূর্বপুরুষ'], ['tree', 'বংশবৃক্ষ'],
-  ['memorial', 'স্মরণ'], ['games', 'খেলা'],
+  ['', 'হোম'], ['ancestors', 'পূর্বপুরুষ'], ['tree', 'বংশবৃক্ষ'], ['roots', 'আমার শিকড়'],
+  ['album', 'অ্যালবাম'], ['memorial', 'স্মরণ'], ['games', 'খেলা'],
 ]
 
 export default function Nav({ page }) {
@@ -13,12 +13,13 @@ export default function Nav({ page }) {
   const [snd, setSnd] = useState(soundOn())
   const toggle = () => { const v = !snd; setSoundOn(v); setSnd(v); if (v) play('open') }
   const pendingCount = c.isAdmin ? c.fam.members.filter(m => m.status === 'pending').length : 0
+  const pendingPhotos = c.isAdmin ? c.photos.filter(p => p.status === 'pending').length : 0
   return (
     <nav className="nav">
       <a className="brand" href="#/">সরকার বংশ</a>
       <div className="tabs">
         {LINKS.map(([p, l]) => (
-          <a key={p} href={`#/${p}`} className={(page === p || (p === '' && page === 'm')) ? 'act' : ''}>{l}</a>
+          <a key={p} href={`#/${p}`} className={(page === p || (p === '' && page === 'm')) ? 'act' : ''}>{l}{p === 'album' && pendingPhotos > 0 && <b className="dot">{pendingPhotos}</b>}</a>
         ))}
         {c.isAdmin && <a href="#/admin" className={page === 'admin' ? 'act' : ''}>এডমিন{pendingCount > 0 && <b className="dot">{pendingCount}</b>}</a>}
       </div>
