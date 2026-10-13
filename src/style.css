@@ -372,3 +372,12 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .rel-out b { font-size: 1.1em }
 .rel-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-top: 8px }
 .rel-chain .chip { background: rgba(255,255,255,.7); color: #2a1020 }
+
+/* ---------- স্মরণ: দোয়া ---------- */
+.dua-count { display: block; margin-top: 4px; color: var(--pri); font-weight: 600 }
+.dua-head { display: flex; gap: 12px; align-items: center; margin-bottom: 14px }
+.dua-head h2 { margin: 0 }
+.dua-item { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line) }
+.dua-no { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--soft); color: var(--pri); font-weight: 700 }
+.dua-text { font-size: 19px; line-height: 1.8; margin: 0 0 4px; font-weight: 500 }
+.dua-mean { margin: 6px 0 0; line-height: 1.7 }
