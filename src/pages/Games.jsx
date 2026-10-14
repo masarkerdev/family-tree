@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { sb } from '../supabase'
 import { useApp } from '../ctx'
 import { bn, shuffle, store } from '../lib/util'
 import Avatar from '../components/Avatar'
@@ -10,8 +11,17 @@ const ROUND = 5
 const getPts = () => store('pts') || 0
 const addPts = n => { const v = getPts() + n; store('pts', v); return v }
 
+// একটা খেলা শেষ হলে লিডারবোর্ডে ফল জমা (leaderboard-achievements.sql না চালানো থাকলে চুপচাপ বাদ)
+async function saveScore(game, correct, total, points) {
+  const { data } = await sb.auth.getSession()
+  if (!data.session) return false
+  const { error } = await sb.from('game_scores').insert({ user_id: data.session.user.id, game, correct, total, points })
+  if (!error) window.dispatchEvent(new Event('scores-changed'))
+  return !error
+}
+
 // সাধারণ প্রশ্নোত্তর খেলা: আগে উত্তর বাছুন (বদলানো যায়), তারপর "উত্তর দিন"
-function Mcq({ title, make, onExit }) {
+function Mcq({ gameId, title, make, onExit }) {
   const { open } = useApp()
   const [round, setRound] = useState(() => shuffle(make()).slice(0, ROUND))
   const [i, setI] = useState(0)
@@ -19,7 +29,16 @@ function Mcq({ title, make, onExit }) {
   const [done, setDone] = useState(false)
   const [score, setScore] = useState(0)
   const [pts, setPts] = useState(getPts)
-  const restart = () => { setRound(shuffle(make()).slice(0, ROUND)); setI(0); setSel(null); setDone(false); setScore(0) }
+  const [saved, setSaved] = useState(null)
+  const sent = useRef(false)
+  const restart = () => { setRound(shuffle(make()).slice(0, ROUND)); setI(0); setSel(null); setDone(false); setScore(0); setSaved(null); sent.current = false }
+  const finished = round.length > 0 && i >= round.length
+  useEffect(() => {
+    if (finished && !sent.current) {
+      sent.current = true
+      saveScore(gameId, score, round.length, score * 10).then(setSaved)
+    }
+  }, [finished]) // eslint-disable-line
 
   if (!round.length) return (
     <div className="card game">
@@ -37,7 +56,8 @@ function Mcq({ title, make, onExit }) {
         <h2>{title}</h2>
         <p className="big-score">{bn(score)}/{bn(round.length)} সঠিক</p>
         <p className="badge-big">{badge}</p>
-        <p>মোট পয়েন্ট: <b>{bn(pts)}</b></p>
+        <p>এই খেলায় <b>{bn(score * 10)}</b> পয়েন্ট</p>
+        {saved && <p className="muted small">🏅 লিডারবোর্ডে যোগ হয়েছে</p>}
         <div className="actions center-actions">
           <button className="btn" onClick={restart}>আবার খেলুন</button>
           <button className="btn soft" onClick={onExit}>← সব খেলা</button>
@@ -60,7 +80,7 @@ function Mcq({ title, make, onExit }) {
     <div className="card game">
       <div className="game-top">
         <button className="link" onClick={onExit}>← সব খেলা</button>
-        <small className="muted">প্রশ্ন {bn(i + 1)}/{bn(round.length)} · পয়েন্ট {bn(pts)}</small>
+        <small className="muted">প্রশ্ন {bn(i + 1)}/{bn(round.length)} · পয়েন্ট {bn(score * 10)}</small>
       </div>
       <div className="progress" aria-hidden="true"><span style={{ width: `${(i / round.length) * 100}%` }} /></div>
       <h3 className="q">{x.q}</h3>
@@ -114,7 +134,12 @@ function PairGame({ onExit }) {
     if (ok) {
       const m = { ...matched, [kid]: parent.id }
       setMatched(m); setKid(null)
-      if (Object.keys(m).length === pairs.length) { play('win'); addPts(Math.max(10, 50 - (tries + 1 - pairs.length) * 10)) } else play('ok')
+      if (Object.keys(m).length === pairs.length) {
+        play('win')
+        const pts = Math.max(10, 50 - (tries + 1 - pairs.length) * 10)
+        addPts(pts)
+        saveScore('pair', pairs.length, pairs.length, pts)
+      } else play('ok')
     } else { play('bad'); setMiss(parent.id); setTimeout(() => setMiss(null), 600) }
   }
   return (
@@ -143,7 +168,7 @@ function PairGame({ onExit }) {
       {won && (
         <div className="fb center">
           <p className="big-score">সব মিলেছে! 🎉</p>
-          <p>{bn(tries)} বার চেষ্টায়</p>
+          <p>{bn(tries)} বার চেষ্টায় · {bn(Math.max(10, 50 - (tries - pairs.length) * 10))} পয়েন্ট</p>
           <div className="actions center-actions"><button className="btn" onClick={restart}>আবার খেলুন</button><button className="btn soft" onClick={onExit}>← সব খেলা</button></div>
         </div>
       )}
@@ -206,6 +231,67 @@ function Relation() {
   )
 }
 
+const MEDAL = ['🥇', '🥈', '🥉']
+const monthStart = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString() }
+
+// লিডারবোর্ড: এই মাস / সব সময়
+function Leaderboard() {
+  const { fam, uid, open } = useApp()
+  const [span, setSpan] = useState('month')
+  const [rows, setRows] = useState(null)
+  const [missing, setMissing] = useState(false)
+  const load = useCallback(async () => {
+    const { data, error } = await sb.rpc('leaderboard', { since: span === 'month' ? monthStart() : null, lim: 10 })
+    if (error) { setMissing(true); return setRows([]) }
+    setRows(data || [])
+  }, [span])
+  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    addEventListener('scores-changed', load)
+    return () => removeEventListener('scores-changed', load)
+  }, [load])
+
+  if (missing) return null
+  const monthName = new Date().toLocaleDateString('bn-BD', { month: 'long' })
+  const top = rows?.[0]
+  return (
+    <section className="card lb">
+      <div className="lb-head">
+        <h2>🏆 লিডারবোর্ড</h2>
+        <div className="seg" role="tablist" aria-label="সময়">
+          <button role="tab" aria-selected={span === 'month'} className={span === 'month' ? 'on' : ''} onClick={() => setSpan('month')}>{monthName} মাস</button>
+          <button role="tab" aria-selected={span === 'all'} className={span === 'all' ? 'on' : ''} onClick={() => setSpan('all')}>সব সময়</button>
+        </div>
+      </div>
+      {rows === null ? <p className="muted">লোড হচ্ছে…</p> : !rows.length ? (
+        <p className="muted">{span === 'month' ? 'এই মাসে এখনো কেউ খেলেননি। প্রথম হওয়ার সুযোগ আপনার!' : 'এখনো কেউ খেলেননি।'}</p>
+      ) : (
+        <>
+          {span === 'month' && top && (
+            <p className="lb-star">⭐ {monthName} মাসের সেরা খেলোয়াড়: <b>{top.name}</b></p>
+          )}
+          <ol className="lb-list">
+            {rows.map((r, i) => {
+              const m = r.member_id ? fam.byId.get(r.member_id) : null
+              const acc = r.answered ? Math.round((r.correct / r.answered) * 100) : 0
+              return (
+                <li key={r.user_id} className={'lb-row' + (r.user_id === uid ? ' me' : '') + (i < 3 ? ' top' : '')}>
+                  <span className="lb-rank">{MEDAL[i] || bn(i + 1)}</span>
+                  {m ? <button className="lb-who" onClick={() => open(m.id)}><Avatar m={m} size={36} /><b>{r.name}</b></button>
+                    : <span className="lb-who"><span className="lb-dot">{(r.name || '?').slice(0, 1)}</span><b>{r.name}</b></span>}
+                  <small className="muted">{bn(r.games)} খেলা · {bn(acc)}% সঠিক</small>
+                  <span className="lb-pts">{bn(r.points)}</span>
+                </li>
+              )
+            })}
+          </ol>
+          {uid && !rows.some(r => r.user_id === uid) && <p className="muted small">আপনি এখনো সেরা দশে নেই। আরেকটা খেলা খেলে দেখুন!</p>}
+        </>
+      )}
+    </section>
+  )
+}
+
 export default function Games() {
   const { fam, photos } = useApp()
   const [game, setGame] = useState(null)
@@ -221,10 +307,10 @@ export default function Games() {
   return (
     <div className="inner">
       <h1 className="page-title">গেইমশো</h1>
-      <p className="muted">খেলতে খেলতে বংশের মানুষদের চিনে নিন। প্রতিটা সঠিক উত্তরে ১০ পয়েন্ট। আপনার মোট পয়েন্ট: <b>{bn(getPts())}</b></p>
+      <p className="muted">খেলতে খেলতে বংশের মানুষদের চিনে নিন। প্রতিটা সঠিক উত্তরে ১০ পয়েন্ট, আর সব পয়েন্ট জমা হয় লিডারবোর্ডে।</p>
       {g ? (
         g.id === 'pair' ? <PairGame key={g.id} onExit={() => setGame(null)} />
-          : <Mcq key={g.id} title={`${g.icon} ${g.title}`} make={g.make} onExit={() => setGame(null)} />
+          : <Mcq key={g.id} gameId={g.id} title={`${g.icon} ${g.title}`} make={g.make} onExit={() => setGame(null)} />
       ) : (
         <div className="game-grid">
           {GAMES.map(x => (
@@ -237,6 +323,7 @@ export default function Games() {
           ))}
         </div>
       )}
+      {!g && <Leaderboard />}
       <div className="grid wide" style={{ marginTop: 18 }}><Relation /></div>
     </div>
   )

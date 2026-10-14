@@ -19,6 +19,7 @@ import Roots from './pages/Roots'
 import Album from './pages/Album'
 import Places from './pages/Places'
 import Writings from './pages/Writings'
+import Achievements from './pages/Achievements'
 
 function useHash() {
   const [h, setH] = useState(location.hash || '#/')
@@ -172,6 +173,7 @@ export default function App() {
   else if (page === 'album') body = <Album photoId={arg} />
   else if (page === 'places') body = <Places />
   else if (page === 'writings') body = <Writings id={arg} />
+  else if (page === 'achievements') body = <Achievements />
   else body = <Home />
 
   return (

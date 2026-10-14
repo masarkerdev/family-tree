@@ -4,6 +4,7 @@ import { useApp } from '../ctx'
 import { fmtDate, honor, bn, birthYear, deathYear } from '../lib/util'
 import Avatar from './Avatar'
 import { placeText, hasPlace } from '../lib/places'
+import { AchCard, useAchievements } from '../pages/Achievements'
 
 // একজন সদস্যের পেইজ
 export default function MemberSheet({ id }) {
@@ -14,6 +15,7 @@ export default function MemberSheet({ id }) {
   const [busy, setBusy] = useState('')
   const [copied, setCopied] = useState(false)
   const fileRef = useRef()
+  const ach = useAchievements(id)
 
   useEffect(() => {
     setPhone(null)
@@ -109,6 +111,15 @@ export default function MemberSheet({ id }) {
         <div className="skills">
           <h3>পারদর্শিতা</h3>
           <p className="tags">{skills.map(t => <span key={t} className="chip skill">⭐ {t}</span>)}</p>
+        </div>
+      )}
+
+      {ach.list && ach.list.some(a => a.status === 'approved') && (
+        <div className="m-ach">
+          <h3>🏆 অর্জন · {bn(ach.list.filter(a => a.status === 'approved').length)}টি</h3>
+          {ach.list.filter(a => a.status === 'approved').map(a => (
+            <AchCard key={a.id} a={a} compact cheers={ach.count.get(a.id)} mine={ach.mine(a.id)} onCheer={() => ach.cheer(a.id)} />
+          ))}
         </div>
       )}
 

@@ -532,3 +532,39 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .btn.heart.on { background: color-mix(in srgb, #e84a86 18%, var(--card)); color: var(--fg); box-shadow: inset 0 0 0 2px #e84a86 }
 .btn.heart:not(.on) { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 2px var(--line) }
 .w-del { color: var(--bad) !important }
+
+/* ---------- গেইমশো: লিডারবোর্ড ---------- */
+.lb { margin-top: 18px }
+.lb-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap }
+.lb-head h2 { margin: 0 }
+.lb-head .seg { margin: 0 }
+.lb-star { margin: 10px 0; padding: 10px 14px; border-radius: 14px; background: color-mix(in srgb, var(--gold) 22%, var(--card)); font-weight: 500 }
+.lb-list { list-style: none; padding: 0; margin: 8px 0 0 }
+.lb-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 14px }
+.lb-row + .lb-row { border-top: 1px dashed var(--line) }
+.lb-row.top { background: color-mix(in srgb, var(--gold) 9%, transparent) }
+.lb-row.me { box-shadow: inset 0 0 0 2px var(--pri) }
+.lb-rank { font-size: 22px; text-align: center; font-weight: 700; color: var(--mut) }
+.lb-who { display: inline-flex; align-items: center; gap: 8px; min-width: 0; border: 0; background: none; color: var(--fg); font: inherit; padding: 0; cursor: pointer; text-align: left }
+.lb-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.lb-dot { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--soft); color: var(--pri); font-weight: 700; flex: none }
+.lb-pts { font-size: 20px; font-weight: 700; color: var(--pri); min-width: 48px; text-align: right }
+@media (max-width: 560px) { .lb-row { grid-template-columns: 34px minmax(0, 1fr) auto } .lb-row > small { grid-column: 2 / 4; grid-row: 2; margin-top: -6px } }
+
+/* ---------- অর্জন বোর্ড ---------- */
+.ach { --c: var(--pri); box-shadow: inset 0 0 0 2px var(--line), inset 0 5px 0 var(--c) }
+.c-edu { --c: #3a7bd5 } .c-job { --c: #0f6b5c } .c-award { --c: #e8a33d } .c-sports { --c: #e84a86 } .c-religion { --c: #2e8b57 } .c-other { --c: #6b6bd6 }
+.ach-top { display: flex; gap: 12px; align-items: flex-start }
+.ach-ico { font-size: 30px; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 14%, var(--card)); flex: none }
+.ach-main { min-width: 0 }
+.ach-main h3 { margin: 2px 0 6px; font-size: 19px }
+.ach-cat { color: var(--c); font-weight: 600 }
+.ach-detail { margin: 10px 0 0; color: var(--mut); white-space: pre-line }
+.ach-img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 14px; margin-top: 10px }
+.btn.cheer:not(.on) { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 2px var(--line) }
+.btn.cheer.on { background: color-mix(in srgb, var(--gold) 30%, var(--card)); color: var(--fg); box-shadow: inset 0 0 0 2px var(--gold) }
+.ach-year { width: auto; min-width: 130px; padding: 11px 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); color: var(--fg); font: inherit }
+.m-ach { margin: 14px 0 }
+.m-ach h3 { margin-bottom: 6px }
+.ach.compact { padding: 12px 14px; margin: 8px 0 }
+.ach.compact .ach-ico { width: 42px; height: 42px; font-size: 24px }
