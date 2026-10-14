@@ -3,7 +3,7 @@ import { sb, fetchAll } from '../supabase'
 import { useApp } from '../ctx'
 import { bn, download } from '../lib/util'
 import Avatar from '../components/Avatar'
-import PersonPicker from '../components/PersonPicker'
+import PersonPicker, { nameMatches } from '../components/PersonPicker'
 import { accountLabel } from '../lib/phone'
 
 function Approvals() {
@@ -12,11 +12,22 @@ function Approvals() {
   const pending = fam.members.filter(m => m.status === 'pending')
   const [claims, setClaims] = useState([])
   const [emails, setEmails] = useState({})
+  const [waiting, setWaiting] = useState([])     // অনুমতির অপেক্ষায় থাকা নতুন একাউন্ট
+  const [noCol, setNoCol] = useState(false)
+  const [link, setLink] = useState({})           // একাউন্ট → কোন সদস্যের পেইজের সাথে যুক্ত হবে
   const load = async () => {
     const { data } = await sb.from('claims').select('*').eq('status', 'pending').order('created_at')
     setClaims(data || [])
     const { data: p } = await sb.from('profiles').select('id,email')
     setEmails(Object.fromEntries((p || []).map(x => [x.id, x.email])))
+    const w = await sb.from('profiles').select('id,email,name,phone,created_at').eq('approved', false).order('created_at')
+    setNoCol(!!w.error)
+    setWaiting(w.data || [])
+    // নামের সাথে মেলে, এখনো কারো একাউন্টে যুক্ত নয়, এমন একজন থাকলে আগে থেকেই বেছে রাখা
+    setLink(Object.fromEntries((w.data || []).map(a => {
+      const hit = fam.members.filter(m => !m.user_id && a.name && nameMatches(m.name, a.name))
+      return [a.id, hit.length === 1 ? hit[0].id : null]
+    })))
   }
   useEffect(() => { load() }, [])
 
@@ -24,6 +35,18 @@ function Approvals() {
     const { error } = await sb.from('members').update({ status: 'approved' }).eq('id', m.id)
     if (error) return alert(error.message)
     c.reload()
+  }
+  const review = async (a, ok) => {
+    const who = a.name || accountLabel(a.email)
+    if (!ok && !confirm(`${who}-এর একাউন্ট বাতিল করে মুছে ফেলবেন?`)) return
+    const { error } = await sb.rpc('admin_review_user', { target: a.id, ok })
+    if (error) return alert(error.message)
+    if (ok && link[a.id]) {
+      const r = await sb.from('members').update({ user_id: a.id }).eq('id', link[a.id])
+      if (r.error) alert(r.error.message)
+      if (a.phone) await sb.from('member_private').upsert({ member_id: link[a.id], phone: a.phone })
+    }
+    load(); c.reload()
   }
   const decide = async (cl, ok) => {
     if (ok) {
@@ -36,6 +59,27 @@ function Approvals() {
 
   return (
     <>
+      <h2 className="sec">নতুন একাউন্ট ({bn(waiting.length)})</h2>
+      {noCol ? <p className="note">এই অংশ চালু করতে Supabase-এ <code>account-approval.sql</code> চালান।</p> : (
+        <>
+          <p className="muted small">অনুমতি দিলে তবেই এঁরা লগইন করতে পারবেন। চেনা মানুষ কিনা নম্বরে ফোন করে নিশ্চিত হয়ে নিন। বংশতালিকায় তাঁর নাম থাকলে বেছে দিন, তাহলে নিজের পেইজ নিজে সাজাতে পারবেন।</p>
+          {waiting.length ? waiting.map(a => (
+            <div key={a.id} className="card adm-acc">
+              <div className="adm-acc-top">
+                <span><b>{a.name || 'নাম দেওয়া নেই'}</b><small>{a.phone ? <a href={`tel:${a.phone}`}>📱 {a.phone}</a> : accountLabel(a.email)}</small></span>
+                <div className="actions">
+                  <button className="btn sm" onClick={() => review(a, true)}>✓ অনুমতি দিন</button>
+                  <button className="btn sm soft" onClick={() => review(a, false)}>বাতিল</button>
+                </div>
+              </div>
+              <label className="small">বংশতালিকায় ইনি কে? (না থাকলে খালি রাখুন)
+                <PersonPicker value={link[a.id]} onChange={v => setLink(l => ({ ...l, [a.id]: v }))} filter={m => !m.user_id} placeholder="নাম লিখে খুঁজুন…" />
+              </label>
+            </div>
+          )) : <p className="muted">কোনো নতুন একাউন্ট অপেক্ষায় নেই।</p>}
+        </>
+      )}
+
       <h2 className="sec">নতুন সদস্য ({bn(pending.length)})</h2>
       {pending.length ? pending.map(m => (
         <div key={m.id} className="card adm-row">
@@ -142,7 +186,7 @@ function Admins() {
         const m = fam.members.find(x => x.user_id === p.id)
         return (
           <div key={p.id} className="card adm-row">
-            <span><b>{accountLabel(p.email)}</b><small>{p.role === 'admin' ? '⭐ এডমিন' : 'সদস্য'}{m ? ` · ${m.name}` : ' · পেইজের সাথে যুক্ত নয়'}</small></span>
+            <span><b>{p.name || accountLabel(p.email)}</b><small>{p.name ? accountLabel(p.email) + ' · ' : ''}{p.approved === false ? '⏳ অনুমতির অপেক্ষায় · ' : ''}{p.role === 'admin' ? '⭐ এডমিন' : 'সদস্য'}{m ? ` · ${m.name}` : ' · পেইজের সাথে যুক্ত নয়'}</small></span>
             <div className="actions">
               <button className="btn sm soft" onClick={() => resetPw(p)}>🔑 পাসওয়ার্ড</button>
               <button className="btn sm soft" onClick={() => toggle(p)}>{p.role === 'admin' ? 'এডমিন থেকে সরান' : 'এডমিন বানান'}</button>

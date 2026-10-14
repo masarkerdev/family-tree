@@ -482,3 +482,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .same-name small.muted { display: inline }
 .in-law + .in-law { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line) }
 .in-law > div { margin: 2px 0 }
+
+/* এডমিন: নতুন একাউন্টের অনুমতি */
+.adm-acc { display: block }
+.adm-acc-top { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap }
+.adm-acc-top > span { display: flex; flex-direction: column }
+.adm-acc-top small a { color: var(--pri) }
+.adm-acc label { margin-top: 8px }
+.form .link.muted { color: var(--mut) }
