@@ -11,6 +11,7 @@ export default function AuthModal({ onClose }) {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [msg, setMsg] = useState('')
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -86,10 +87,20 @@ export default function AuthModal({ onClose }) {
               </label>
             )}
             <label>পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)
-              <input type="password" required minLength={6} value={pw} onChange={e => setPw(e.target.value)}
-                autoComplete={mode === 'up' ? 'new-password' : 'current-password'} />
+              <span className="pw-wrap">
+                <input type={showPw ? 'text' : 'password'} required minLength={6} value={pw} onChange={e => setPw(e.target.value)}
+                  autoComplete={mode === 'up' ? 'new-password' : 'current-password'} />
+                <button type="button" className="pw-eye" onClick={() => setShowPw(v => !v)}
+                  aria-label={showPw ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন'} title={showPw ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন'} aria-pressed={showPw}>
+                  {showPw ? (
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                  )}
+                </button>
+              </span>
             </label>
-            <button className="btn" disabled={busy}>{busy ? 'অপেক্ষা করুন…' : mode === 'up' ? 'একাউন্ট খুলুন' : 'ঢুকুন'}</button>
+            <button className="btn" disabled={busy}>{busy ? 'অপেক্ষা করুন…' : mode === 'up' ? 'একাউন্ট খুলুন' : 'বাড়িতে প্রবেশ করুন'}</button>
           </>
         )}
         {msg && <p className="note">{msg}</p>}

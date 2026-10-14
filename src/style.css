@@ -497,3 +497,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .lock-bar { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; background: color-mix(in srgb, var(--gold) 22%, var(--bg)); font-weight: 600; text-align: center }
 .lock-card { text-align: center; max-width: 560px; margin: 40px auto; padding: 32px 22px }
 .lock-ico { font-size: 44px; margin-bottom: 6px }
+
+/* পাসওয়ার্ড দেখার চোখ */
+.pw-wrap { position: relative; display: block }
+.form .pw-wrap input { padding-right: 46px }
+.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); margin-top: 3px; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--mut); cursor: pointer }
+.pw-eye:hover, .pw-eye[aria-pressed="true"] { color: var(--pri); background: var(--soft) }
