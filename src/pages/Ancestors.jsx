@@ -69,7 +69,7 @@ export function Descendants({ person, onClose }) {
                         {g.kids.map(k => (
                           <button key={k.id} className={'kid' + (k.is_deceased ? ' dead' : '')} onClick={() => open(k.id)}>
                             <Avatar m={k} size={40} />
-                            <span><b>{k.name}</b><small>{[fam.code(k), k.is_deceased ? 'মরহুম' : lifeSpan(k)].filter(Boolean).join(' · ')}</small></span>
+                            <span><b>{k.name}</b><small>{[fam.code(k), k.is_deceased ? 'মরহুম' : lifeSpan(k)].filter(Boolean).join(' · ')}</small>{Array.isArray(k.skills) && k.skills.length > 0 && <small className="kid-skill">⭐ {k.skills.slice(0, 2).join(', ')}{k.skills.length > 2 ? '…' : ''}</small>}</span>
                           </button>
                         ))}
                       </div>

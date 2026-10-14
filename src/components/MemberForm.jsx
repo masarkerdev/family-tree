@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { sb } from '../supabase'
 import { useApp } from '../ctx'
 import PersonPicker from './PersonPicker'
+import { DISTRICTS, SKILL_SUGGESTIONS } from '../lib/places'
 
 const EMPTY = {
   name: '', nick_name: '', gender: 'male', in_lineage: true, father_id: null, mother_id: null, sort_order: 0,
   birth_year: '', birth_date: '', is_deceased: false, death_year: '', death_date: '',
   occupation: '', address: '', bio: '',
+  village: '', upazila: '', district: '', skills: [],
 }
 
 // সদস্য যোগ বা সম্পাদনা
@@ -17,11 +19,21 @@ export default function MemberForm({ id, preset }) {
   const [f, setF] = useState(() => {
     const base = { ...EMPTY, ...(orig || {}), ...(preset || {}) }
     for (const k of Object.keys(EMPTY)) if (base[k] === null && typeof EMPTY[k] === 'string') base[k] = ''
+    if (!Array.isArray(base.skills)) base.skills = []
     return base
   })
   const [phone, setPhone] = useState('')
   const [spouse, setSpouse] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [skill, setSkill] = useState('')
+  // places-skills.sql চালানো হয়েছে কিনা (নতুন ঘরগুলো ডাটাবেসে আছে কিনা)
+  const hasCols = fam.members.some(m => 'skills' in m)
+  const upazilas = [...new Set(fam.members.map(m => m.upazila).filter(Boolean))]
+  const addSkill = v => {
+    const t = v.trim()
+    if (t && !f.skills.includes(t)) set('skills', [...f.skills, t])
+    setSkill('')
+  }
   const set = (k, v) => setF(p => ({ ...p, [k]: v }))
   const isNew = !id
   const canTree = isAdmin || isNew          // সাধারণ সদস্য শুধু নতুন যোগ করার সময় বাবা-মা বেছে নিতে পারেন
@@ -83,6 +95,10 @@ export default function MemberForm({ id, preset }) {
       death_year: f.is_deceased ? (f.death_date ? +f.death_date.slice(0, 4) : num(f.death_year)) : null,
       occupation: f.occupation || null, address: f.address || null, bio: f.bio || null,
     }
+    if (hasCols) Object.assign(row, {
+      village: f.village.trim() || null, upazila: f.upazila.trim() || null, district: f.district.trim() || null,
+      skills: f.skills,
+    })
     if (canTree) Object.assign(row, { father_id: f.father_id, mother_id: f.mother_id })
     if (isAdmin) Object.assign(row, { in_lineage: f.in_lineage, sort_order: num(f.sort_order) || 0 })
 
@@ -194,6 +210,38 @@ export default function MemberForm({ id, preset }) {
         <label>পেশা<input value={f.occupation} onChange={e => set('occupation', e.target.value)} /></label>
         <label>বর্তমান ঠিকানা (এলাকা)<input value={f.address} onChange={e => set('address', e.target.value)} /></label>
       </div>
+
+      {hasCols && (!f.in_lineage || f.village || f.upazila || f.district) && (
+        <fieldset>
+          <legend>বাবার বাড়ি</legend>
+          <p className="muted small">বউ বা জামাইয়ের নিজের গ্রামের বাড়ি। এটা দিলে তাঁদের সন্তানদের নানাবাড়ি (বা দাদাবাড়ি) কোথায়, তা দেখা যাবে।</p>
+          <label>গ্রাম<input value={f.village} onChange={e => set('village', e.target.value)} /></label>
+          <div className="two-col">
+            <label>উপজেলা<input list="upazila-list" value={f.upazila} onChange={e => set('upazila', e.target.value)} /></label>
+            <label>জেলা<input list="district-list" value={f.district} onChange={e => set('district', e.target.value)} placeholder="যেমন: কুমিল্লা" /></label>
+          </div>
+          <datalist id="upazila-list">{upazilas.map(u => <option key={u} value={u} />)}</datalist>
+          <datalist id="district-list">{DISTRICTS.map(d => <option key={d} value={d} />)}</datalist>
+        </fieldset>
+      )}
+
+      {hasCols && (
+        <fieldset>
+          <legend>পারদর্শিতা</legend>
+          <p className="muted small">যেসব কাজে তিনি দক্ষ বা যা ভালোবাসেন: কুরআন তিলাওয়াত, গান, ক্রিকেট, ছবি আঁকা…</p>
+          {f.skills.length > 0 && (
+            <p className="tags">{f.skills.map(t => (
+              <span key={t} className="chip skill">{t}<button type="button" className="x" aria-label="সরান" onClick={() => set('skills', f.skills.filter(x => x !== t))}>✕</button></span>
+            ))}</p>
+          )}
+          <div className="skill-add">
+            <input list="skill-list" value={skill} placeholder="লিখুন বা তালিকা থেকে বাছুন…" onChange={e => setSkill(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(skill) } }} />
+            <button type="button" className="btn soft" onClick={() => addSkill(skill)}>যোগ করুন</button>
+          </div>
+          <datalist id="skill-list">{SKILL_SUGGESTIONS.filter(x => !f.skills.includes(x)).map(x => <option key={x} value={x} />)}</datalist>
+        </fieldset>
+      )}
       {canPhone && <label>ফোন (শুধু লগইন করা সদস্যরা দেখবেন)<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} /></label>}
       <label>জীবনী ও গল্প<textarea rows="5" value={f.bio} onChange={e => set('bio', e.target.value)}
         placeholder="তিনি কেমন মানুষ ছিলেন, কী করতেন, তাঁর কোনো মজার বা শিক্ষণীয় ঘটনা… এই গল্পগুলোই খেলায় প্রশ্ন হয়ে আসবে।" /></label>

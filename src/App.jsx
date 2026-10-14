@@ -17,6 +17,7 @@ import Admin from './pages/Admin'
 import FamilyPrint from './pages/FamilyPrint'
 import Roots from './pages/Roots'
 import Album from './pages/Album'
+import Places from './pages/Places'
 
 function useHash() {
   const [h, setH] = useState(location.hash || '#/')
@@ -136,6 +137,7 @@ export default function App() {
   else if (page === 'family') body = <FamilyPrint id={arg} />
   else if (page === 'roots') body = <Roots id={arg} />
   else if (page === 'album') body = <Album photoId={arg} />
+  else if (page === 'places') body = <Places />
   else body = <Home />
 
   return (

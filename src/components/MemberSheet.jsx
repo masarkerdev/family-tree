@@ -3,6 +3,7 @@ import { sb, uploadPhoto } from '../supabase'
 import { useApp } from '../ctx'
 import { fmtDate, honor, bn, birthYear, deathYear } from '../lib/util'
 import Avatar from './Avatar'
+import { placeText, hasPlace } from '../lib/places'
 
 // একজন সদস্যের পেইজ
 export default function MemberSheet({ id }) {
@@ -32,6 +33,10 @@ export default function MemberSheet({ id }) {
   const canClaim = session && !c.me && !m.user_id && !myClaim && m.status === 'approved'
   const code = fam.code(m)
   const pics = (c.photos || []).filter(p => p.status === 'approved' && p.tags.includes(id))
+  // নানাবাড়ি: মা বাইরের পরিবারের হলে তাঁর বাবার বাড়ি। দাদাবাড়ি: বাবা বাইরের পরিবারের (জামাই) হলে তাঁর বাড়ি
+  const nanaBari = mo && !mo.in_lineage && hasPlace(mo) ? placeText(mo) : null
+  const dadaBari = f && !f.in_lineage && hasPlace(f) ? placeText(f) : null
+  const skills = Array.isArray(m.skills) ? m.skills : []
 
   const Chip = ({ p }) => (
     <button className="chip" onClick={() => c.open(p.id)}><Avatar m={p} size={24} />{p.name}</button>
@@ -96,10 +101,20 @@ export default function MemberSheet({ id }) {
 
       {m.bio && <p className="bio">{m.bio}</p>}
 
+      {skills.length > 0 && (
+        <div className="skills">
+          <h3>পারদর্শিতা</h3>
+          <p className="tags">{skills.map(t => <span key={t} className="chip skill">⭐ {t}</span>)}</p>
+        </div>
+      )}
+
       <div className="rows">
         <Row l="বাবা">{f && <Chip p={f} />}</Row>
         <Row l="মা">{mo && <Chip p={mo} />}</Row>
         <Row l="মায়ের বংশ">{nana && <>নানা: <Chip p={nana} /></>}</Row>
+        <Row l="বাবার বাড়ি">{!m.in_lineage && hasPlace(m) && placeText(m)}</Row>
+        <Row l="নানাবাড়ি">{nanaBari}</Row>
+        <Row l="দাদাবাড়ি">{dadaBari}</Row>
         <Row l={m.gender === 'female' ? 'স্বামী' : 'স্ত্রী'}>{sps.length > 0 && sps.map(p => <Chip key={p.id} p={p} />)}</Row>
         <Row l="সন্তান">{kids.length > 0 && <><small className="muted">{fam.kidCount(id)}</small><br />{kids.map(p => <Chip key={p.id} p={p} />)}</>}</Row>
         <Row l="ভাই-বোন">{sibs.length > 0 && sibs.map(p => <Chip key={p.id} p={p} />)}</Row>

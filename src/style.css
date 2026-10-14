@@ -439,3 +439,20 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .stage span { font-weight: 600 }
 .stage small { color: var(--mut); font-size: 12px }
 .stage em { margin-top: 4px; font-style: normal; font-size: 13px; font-weight: 600; color: var(--pri) }
+
+/* ---------- পারদর্শিতা ও আত্মীয়দের এলাকা ---------- */
+.chip.skill { background: color-mix(in srgb, var(--gold) 22%, var(--card)); padding: 4px 12px; font-weight: 500 }
+.skills h3 { font-size: 17px; margin: 6px 0 4px }
+.skill-add { display: flex; gap: 8px; align-items: center }
+.skill-add input { flex: 1; min-width: 0 }
+.form .skill-add input { margin-top: 0 }
+.kid-skill { color: var(--pri) !important; font-weight: 500 }
+.stat-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.district-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 4px }
+.district-chips .chip { padding: 5px 12px }
+.district-chips .chip.on { background: var(--pri); color: #fff }
+.place-u h3 { margin-bottom: 6px }
+.place-row { padding: 6px 0; border-top: 1px solid var(--line) }
+.place-row:first-of-type { border-top: 0 }
+.place-kids { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0 4px 54px }
+@media (max-width: 480px) { .place-kids { margin-left: 0 } }
