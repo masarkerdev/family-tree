@@ -4,6 +4,7 @@ import { useApp } from '../ctx'
 import { bn, download } from '../lib/util'
 import Avatar from '../components/Avatar'
 import PersonPicker from '../components/PersonPicker'
+import { accountLabel } from '../lib/phone'
 
 function Approvals() {
   const c = useApp()
@@ -54,7 +55,7 @@ function Approvals() {
         return (
           <div key={cl.id} className="card adm-row">
             {m && <Avatar m={m} size={44} />}
-            <span><b>{m?.name || 'মুছে ফেলা সদস্য'}</b><small>দাবিদার: {emails[cl.user_id] || cl.user_id}</small></span>
+            <span><b>{m?.name || 'মুছে ফেলা সদস্য'}</b><small>দাবিদার: {accountLabel(emails[cl.user_id]) || cl.user_id}</small></span>
             <div className="actions">
               <button className="btn sm" onClick={() => decide(cl, true)}>✓ মেনে নিন</button>
               <button className="btn sm soft" onClick={() => decide(cl, false)}>বাতিল</button>
@@ -113,27 +114,42 @@ function Content() {
 }
 
 function Admins() {
-  const { uid } = useApp()
+  const { uid, fam } = useApp()
   const [list, setList] = useState([])
   const load = () => sb.from('profiles').select('*').order('created_at').then(({ data }) => setList(data || []))
   useEffect(() => { load() }, [])
   const toggle = async p => {
     if (p.id === uid) return alert('নিজের এডমিন ক্ষমতা নিজে সরানো যাবে না।')
     const role = p.role === 'admin' ? 'member' : 'admin'
-    if (!confirm(`${p.email}-কে ${role === 'admin' ? 'এডমিন বানাবেন' : 'এডমিন থেকে সরাবেন'}?`)) return
+    if (!confirm(`${accountLabel(p.email)}-কে ${role === 'admin' ? 'এডমিন বানাবেন' : 'এডমিন থেকে সরাবেন'}?`)) return
     const { error } = await sb.from('profiles').update({ role }).eq('id', p.id)
     if (error) return alert(error.message)
     load()
   }
+  // মোবাইলের একাউন্টে রিসেট লিংক যায় না, তাই এডমিন নতুন পাসওয়ার্ড দেবেন
+  const resetPw = async p => {
+    const pw = prompt(`${accountLabel(p.email)}-এর নতুন পাসওয়ার্ড লিখুন (কমপক্ষে ৬ অক্ষর):`)
+    if (!pw) return
+    if (pw.length < 6) return alert('কমপক্ষে ৬ অক্ষর দিন।')
+    const { error } = await sb.rpc('admin_set_password', { target: p.id, new_password: pw })
+    if (error) return alert(error.message.includes('admin_set_password') ? 'আগে Supabase-এ phone-bari.sql চালান।' : error.message)
+    alert(`পাসওয়ার্ড বদলানো হয়েছে। তাঁকে জানিয়ে দিন: ${pw}`)
+  }
   return (
     <>
       <p className="muted">বংশের প্রতিটি শাখা থেকে অন্তত একজন বিশ্বস্ত মানুষকে এডমিন রাখুন, যেন একজনের ওপর সাইট নির্ভর না করে।</p>
-      {list.map(p => (
-        <div key={p.id} className="card adm-row">
-          <span><b>{p.email}</b><small>{p.role === 'admin' ? '⭐ এডমিন' : 'সদস্য'}</small></span>
-          <div className="actions"><button className="btn sm soft" onClick={() => toggle(p)}>{p.role === 'admin' ? 'এডমিন থেকে সরান' : 'এডমিন বানান'}</button></div>
-        </div>
-      ))}
+      {list.map(p => {
+        const m = fam.members.find(x => x.user_id === p.id)
+        return (
+          <div key={p.id} className="card adm-row">
+            <span><b>{accountLabel(p.email)}</b><small>{p.role === 'admin' ? '⭐ এডমিন' : 'সদস্য'}{m ? ` · ${m.name}` : ' · পেইজের সাথে যুক্ত নয়'}</small></span>
+            <div className="actions">
+              <button className="btn sm soft" onClick={() => resetPw(p)}>🔑 পাসওয়ার্ড</button>
+              <button className="btn sm soft" onClick={() => toggle(p)}>{p.role === 'admin' ? 'এডমিন থেকে সরান' : 'এডমিন বানান'}</button>
+            </div>
+          </div>
+        )
+      })}
     </>
   )
 }

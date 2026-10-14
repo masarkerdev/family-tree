@@ -19,6 +19,10 @@ export const SKILL_SUGGESTIONS = [
   'স্কাউট', 'বিএনসিসি', 'রেড ক্রিসেন্ট', 'সমাজসেবা', 'রক্তদান',
 ]
 
-// "গ্রাম, উপজেলা, জেলা" — যা যা দেওয়া আছে
-export const placeText = m => (m ? [m.village, m.upazila, m.district].filter(Boolean).join(', ') : '')
-export const hasPlace = m => !!(m && (m.village || m.upazila || m.district))
+// "গ্রাম: চন্ডিপুর, বাড়ি: ভুইয়া বাড়ি, উপজেলা, জেলা" — যা যা দেওয়া আছে
+export const placeText = m => (m ? [
+  m.village && `গ্রাম: ${m.village}`,
+  m.bari && `বাড়ি: ${m.bari}`,
+  m.upazila, m.district,
+].filter(Boolean).join(', ') : '')
+export const hasPlace = m => !!(m && (m.village || m.bari || m.upazila || m.district))

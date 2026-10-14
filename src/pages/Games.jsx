@@ -156,11 +156,11 @@ function PersonSelect({ id, value, onChange, label }) {
   const { fam } = useApp()
   const groups = useMemo(() => {
     const byName = (x, y) => x.name.localeCompare(y.name, 'bn')
+    // একই নামের মানুষদের আলাদা করতে পাশে পিতা/মা, স্বামী/স্ত্রী, জন্মসাল
     const opt = m => {
-      const f = fam.byId.get(m.father_id) || fam.byId.get(m.mother_id)
-      return { id: m.id, text: f ? `${m.name} — ${M(f) ? 'পিতা' : 'মাতা'}: ${f.name}` : m.name }
+      const sub = fam.sub(m).replace(/^[০-৯.]+( · )?/, '')
+      return { id: m.id, text: sub ? `${m.name} — ${sub}` : m.name }
     }
-    const M = p => p.gender !== 'female'
     return [
       ['বংশের সদস্য', fam.members.filter(m => m.in_lineage).sort(byName).map(opt)],
       ['বিয়ের সূত্রে আত্মীয়', fam.members.filter(m => !m.in_lineage).sort(byName).map(opt)],

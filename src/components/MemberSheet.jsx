@@ -37,6 +37,10 @@ export default function MemberSheet({ id }) {
   const nanaBari = mo && !mo.in_lineage && hasPlace(mo) ? placeText(mo) : null
   const dadaBari = f && !f.in_lineage && hasPlace(f) ? placeText(f) : null
   const skills = Array.isArray(m.skills) ? m.skills : []
+  // শ্বশুর বাড়ি: বংশের ছেলে/মেয়ের স্বামী বা স্ত্রী বাইরের পরিবারের হলে তাঁর বাবার বাড়ি
+  const inLaws = m.in_lineage ? sps.filter(s => !s.in_lineage).map(s => ({
+    s, place: hasPlace(s) ? placeText(s) : null, father: fam.byId.get(s.father_id),
+  })).filter(x => x.place || x.father) : []
 
   const Chip = ({ p }) => (
     <button className="chip" onClick={() => c.open(p.id)}><Avatar m={p} size={24} />{p.name}</button>
@@ -116,6 +120,13 @@ export default function MemberSheet({ id }) {
         <Row l="নানাবাড়ি">{nanaBari}</Row>
         <Row l="দাদাবাড়ি">{dadaBari}</Row>
         <Row l={m.gender === 'female' ? 'স্বামী' : 'স্ত্রী'}>{sps.length > 0 && sps.map(p => <Chip key={p.id} p={p} />)}</Row>
+        <Row l="শ্বশুর বাড়ি">{inLaws.length > 0 && inLaws.map(x => (
+          <div key={x.s.id} className="in-law">
+            {inLaws.length > 1 && <small className="muted">{x.s.name}-এর বাবার বাড়ি</small>}
+            {x.place && <div>🏡 {x.place}</div>}
+            {x.father && <div>শ্বশুর: <Chip p={x.father} /></div>}
+          </div>
+        ))}</Row>
         <Row l="সন্তান">{kids.length > 0 && <><small className="muted">{fam.kidCount(id)}</small><br />{kids.map(p => <Chip key={p.id} p={p} />)}</>}</Row>
         <Row l="ভাই-বোন">{sibs.length > 0 && sibs.map(p => <Chip key={p.id} p={p} />)}</Row>
         <Row l="জন্ম">{born}</Row>

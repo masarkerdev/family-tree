@@ -475,3 +475,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .leaflet-tooltip.map-tip.home { background: #e84a86; color: #fff }
 .leaflet-tooltip.map-tip::before { display: none }
 .leaflet-container { font-family: 'Hind Siliguri', sans-serif }
+
+/* একই নামের সতর্কতা ও শ্বশুর বাড়ি */
+.same-name ul { margin: 6px 0; padding-left: 18px }
+.same-name li { margin: 2px 0 }
+.same-name small.muted { display: inline }
+.in-law + .in-law { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line) }
+.in-law > div { margin: 2px 0 }

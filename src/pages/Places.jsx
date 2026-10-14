@@ -89,7 +89,7 @@ export default function Places() {
                     <Avatar m={e.m} size={44} />
                     <span>
                       <b>{e.m.name}</b>
-                      <small>{e.m.village ? `গ্রাম: ${e.m.village} · ` : ''}{e.spouses.map(s => `${poss(s.name)} ${e.wife ? 'স্ত্রী' : 'স্বামী'}`).join(', ')}</small>
+                      <small>{e.m.village ? `গ্রাম: ${e.m.village} · ` : ''}{e.m.bari ? `বাড়ি: ${e.m.bari} · ` : ''}{e.spouses.map(s => `${poss(s.name)} ${e.wife ? 'স্ত্রী' : 'স্বামী'}`).join(', ')}</small>
                     </span>
                   </button>
                   {e.kids.length > 0 && (

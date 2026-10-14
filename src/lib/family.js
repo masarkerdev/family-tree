@@ -88,9 +88,17 @@ export function buildFamily(members, marriages) {
     return BRANCH_HUES[i % BRANCH_HUES.length]
   }
 
+  // একই নামের মানুষদের আলাদা করে চেনার ছোট পরিচয়: বংশ নম্বর · পিতা/মা (না থাকলে স্বামী/স্ত্রী) · ডাকনাম · জন্মসাল
   const sub = m => {
     const f = byId.get(m.father_id) || byId.get(m.mother_id)
-    return [code(m), f ? `${f.gender === 'female' ? 'মা' : 'পিতা'}: ${f.name}` : null].filter(Boolean).join(' · ')
+    const sp = f ? null : spouses(m.id)[0]
+    const by = birthYear(m)
+    return [
+      code(m),
+      f ? `${f.gender === 'female' ? 'মা' : 'পিতা'}: ${f.name}` : sp ? `${m.gender === 'female' ? 'স্বামী' : 'স্ত্রী'}: ${sp.name}` : null,
+      m.nick_name ? `ডাকনাম: ${m.nick_name}` : null,
+      by ? `জন্ম ${bn(by)}` : null,
+    ].filter(Boolean).join(' · ')
   }
 
   const kidCount = id => {

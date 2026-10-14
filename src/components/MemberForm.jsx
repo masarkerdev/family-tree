@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { sb } from '../supabase'
 import { useApp } from '../ctx'
-import PersonPicker from './PersonPicker'
+import PersonPicker, { normName } from './PersonPicker'
 import { DISTRICTS, SKILL_SUGGESTIONS } from '../lib/places'
+import { bn } from '../lib/util'
 
 const EMPTY = {
   name: '', nick_name: '', gender: 'male', in_lineage: true, father_id: null, mother_id: null, sort_order: 0,
   birth_year: '', birth_date: '', is_deceased: false, death_year: '', death_date: '',
   occupation: '', address: '', bio: '',
-  village: '', upazila: '', district: '', skills: [],
+  village: '', bari: '', upazila: '', district: '', skills: [],
 }
 
 // সদস্য যোগ বা সম্পাদনা
@@ -28,6 +29,7 @@ export default function MemberForm({ id, preset }) {
   const [skill, setSkill] = useState('')
   // places-skills.sql চালানো হয়েছে কিনা (নতুন ঘরগুলো ডাটাবেসে আছে কিনা)
   const hasCols = fam.members.some(m => 'skills' in m)
+  const hasBari = fam.members.some(m => 'bari' in m)   // phone-bari.sql চালানো হয়েছে কিনা
   const upazilas = [...new Set(fam.members.map(m => m.upazila).filter(Boolean))]
   const addSkill = v => {
     const t = v.trim()
@@ -35,6 +37,8 @@ export default function MemberForm({ id, preset }) {
     setSkill('')
   }
   const set = (k, v) => setF(p => ({ ...p, [k]: v }))
+  // একই নামের অন্য মানুষ — ভুল করে একজনকে দুবার যোগ না করার জন্য সতর্কতা
+  const sameName = f.name.trim() ? fam.members.filter(m => m.id !== id && normName(m.name) === normName(f.name)) : []
   const isNew = !id
   const canTree = isAdmin || isNew          // সাধারণ সদস্য শুধু নতুন যোগ করার সময় বাবা-মা বেছে নিতে পারেন
   const canPhone = id && (isAdmin || (orig && orig.user_id === uid))
@@ -83,6 +87,7 @@ export default function MemberForm({ id, preset }) {
   async function save(e) {
     e.preventDefault()
     if (!f.name.trim()) return alert('নাম দিন')
+    if (!id && sameName.length && !confirm(`"${f.name.trim()}" নামে আগে থেকেই ${bn(sameName.length)} জন আছেন। ইনি কি আলাদা মানুষ? আলাদা হলে OK চাপুন।`)) return
     if (id && (f.father_id === id || f.mother_id === id || fam.descendants(id).has(f.father_id) || fam.descendants(id).has(f.mother_id)))
       return alert('কেউ নিজের বা নিজের বংশধরের সন্তান হতে পারেন না। বাবা/মা আবার দেখুন।')
     const num = v => (v === '' || v == null ? null : +v)
@@ -99,6 +104,7 @@ export default function MemberForm({ id, preset }) {
       village: f.village.trim() || null, upazila: f.upazila.trim() || null, district: f.district.trim() || null,
       skills: f.skills,
     })
+    if (hasBari) row.bari = f.bari.trim() || null
     if (canTree) Object.assign(row, { father_id: f.father_id, mother_id: f.mother_id })
     if (isAdmin) Object.assign(row, { in_lineage: f.in_lineage, sort_order: num(f.sort_order) || 0 })
 
@@ -150,6 +156,13 @@ export default function MemberForm({ id, preset }) {
       {isNew && !isAdmin && <p className="note">আপনি যা যোগ করবেন, এডমিন দেখে অনুমোদন দিলে তবেই সবাই দেখতে পাবেন।</p>}
 
       <label>নাম *<input value={f.name} onChange={e => set('name', e.target.value)} required /></label>
+      {sameName.length > 0 && (
+        <div className="note same-name">
+          <b>এই নামে আরও {bn(sameName.length)} জন আছেন:</b>
+          <ul>{sameName.map(m => <li key={m.id}><button type="button" className="link" onClick={() => c.open(m.id)}>{m.name}</button> <small className="muted">{fam.sub(m) || 'বাবা/মা দেওয়া নেই'}</small></li>)}</ul>
+          <small>একই মানুষ হলে আবার যোগ করবেন না। আলাদা মানুষ হলে চিনতে সুবিধার জন্য ডাকনাম, বাবা-মা ও জন্মসাল অবশ্যই দিন।</small>
+        </div>
+      )}
       <div className="two-col">
         <label>ডাকনাম<input value={f.nick_name} onChange={e => set('nick_name', e.target.value)} /></label>
         <label>লিঙ্গ
@@ -211,11 +224,15 @@ export default function MemberForm({ id, preset }) {
         <label>বর্তমান ঠিকানা (এলাকা)<input value={f.address} onChange={e => set('address', e.target.value)} /></label>
       </div>
 
-      {hasCols && (!f.in_lineage || f.village || f.upazila || f.district) && (
+      {hasCols && (!f.in_lineage || f.village || f.bari || f.upazila || f.district) && (
         <fieldset>
           <legend>বাবার বাড়ি</legend>
           <p className="muted small">বউ বা জামাইয়ের নিজের গ্রামের বাড়ি। এটা দিলে তাঁদের সন্তানদের নানাবাড়ি (বা দাদাবাড়ি) কোথায়, তা দেখা যাবে।</p>
-          <label>গ্রাম<input value={f.village} onChange={e => set('village', e.target.value)} /></label>
+          <div className="two-col">
+            <label>গ্রাম<input value={f.village} onChange={e => set('village', e.target.value)} placeholder="যেমন: চন্ডিপুর" /></label>
+            {hasBari && <label>বাড়ির নাম<input list="bari-list" value={f.bari} onChange={e => set('bari', e.target.value)} placeholder="যেমন: ভুইয়া বাড়ি" /></label>}
+          </div>
+          {hasBari && <datalist id="bari-list">{[...new Set(fam.members.map(m => m.bari).filter(Boolean))].map(b => <option key={b} value={b} />)}</datalist>}
           <div className="two-col">
             <label>উপজেলা<input list="upazila-list" value={f.upazila} onChange={e => set('upazila', e.target.value)} /></label>
             <label>জেলা<input list="district-list" value={f.district} onChange={e => set('district', e.target.value)} placeholder="যেমন: কুমিল্লা" /></label>
