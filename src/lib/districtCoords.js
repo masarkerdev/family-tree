@@ -29,7 +29,7 @@ const ALIAS = {
 }
 
 export const normDistrict = d => {
-  const t = String(d || '').replace(/জেলা$/, '').trim()
+  const t = String(d || '').normalize('NFC').replace(/জেলা$/, '').trim()
   return DISTRICT_COORDS[t] ? t : ALIAS[t] || t
 }
 

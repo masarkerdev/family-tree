@@ -25,7 +25,7 @@ export default function Places() {
     const withPlace = outs.filter(hasPlace).map(entry)
     const byD = new Map()
     for (const e of withPlace) {
-      const d = e.m.district ? normDistrict(e.m.district) : 'জেলা জানা নেই', u = e.m.upazila || 'উপজেলা জানা নেই'
+      const d = e.m.district ? normDistrict(e.m.district) : 'জেলা জানা নেই', u = e.m.upazila ? e.m.upazila.normalize('NFC').trim() : 'উপজেলা জানা নেই'
       if (!byD.has(d)) byD.set(d, new Map())
       const byU = byD.get(d)
       if (!byU.has(u)) byU.set(u, [])
@@ -65,7 +65,7 @@ export default function Places() {
           {groups.some(g => !DISTRICT_COORDS[g.d]) && (
             <p className="muted small">মানচিত্রে বসানো যায়নি: {groups.filter(g => !DISTRICT_COORDS[g.d]).map(g => g.d).join(', ')}। জেলার নামের বানান তালিকার সাথে মিলিয়ে দিন।</p>
           )}
-          <p className="muted small">গোল চিহ্নে চাপলে নিচে শুধু সেই জেলার আত্মীয়রা দেখাবে। গোলাপি চিহ্ন আমাদের বাড়ি অলুয়া।</p>
+          <p className="muted small">রঙিন জেলায় চাপলে মানচিত্র সেই জেলায় বড় হবে, আর নিচে শুধু সেই জেলার আত্মীয়রা দেখাবে। গোলাপি উপজেলায় আত্মীয়দের বাড়ি, গোলাপি বিন্দু আমাদের বাড়ি অলুয়া।</p>
           <div className="district-chips" role="group" aria-label="জেলা বাছুন">
             <button className={'chip' + (!district ? ' on' : '')} onClick={() => setDistrict(null)}>সব জেলা</button>
             {groups.map(g => (
