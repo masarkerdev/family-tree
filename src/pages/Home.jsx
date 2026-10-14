@@ -30,6 +30,14 @@ export default function Home() {
   const ageRows = AGE.map(([lo, hi, label]) => ({ label, n: ages.filter(a => a !== null && a >= lo && a <= hi).length }))
   const noAge = ages.filter(a => a === null || a < 0).length
   const ageMax = Math.max(1, ...ageRows.map(r => r.n))
+  // মোটের কত শতাংশ
+  const pct = n => (lineage.length ? bn(Math.round((n / lineage.length) * 100)) : bn(0))
+  // জীবনের পর্যায় (জন্মসাল জানা জীবিত সদস্যদের মধ্যে)
+  const known = ages.filter(a => a !== null && a >= 0)
+  const STAGES = [
+    ['শিশু', '০–১২ বছর', 0, 12], ['কিশোর-কিশোরী', '১৩–১৯ বছর', 13, 19], ['তরুণ', '২০–৩৫ বছর', 20, 35],
+    ['মধ্যবয়সী', '৩৬–৫৯ বছর', 36, 59], ['প্রবীণ', '৬০ বছর ও বেশি', 60, Infinity],
+  ].map(([name, range, lo, hi]) => ({ name, range, n: known.filter(a => a >= lo && a <= hi).length }))
 
   const dayOf = d => +d.slice(8, 10), monOf = d => +d.slice(5, 7)
   const birthdays = A.filter(m => !m.is_deceased && m.birth_date && monOf(m.birth_date) === t.m)
@@ -89,10 +97,31 @@ export default function Home() {
         <h2 className="sec">পরিসংখ্যান</h2>
         <p className="muted small">শুধু বংশধরদের হিসাব, বিয়ের সূত্রে আসা বউ বা স্বামী এতে নেই।</p>
         <div className="stat-tiles">
-          <div className="stat"><b>{bn(males)}</b><span>পুরুষ</span></div>
-          <div className="stat"><b>{bn(females)}</b><span>মহিলা</span></div>
-          <div className="stat"><b>{bn(living.length)}</b><span>জীবিত</span></div>
-          <div className="stat"><b>{bn(dead)}</b><span>প্রয়াত</span></div>
+          <div className="stat"><b>{bn(males)}</b><span>পুরুষ</span><em>মোটের {pct(males)}%</em></div>
+          <div className="stat"><b>{bn(females)}</b><span>মহিলা</span><em>মোটের {pct(females)}%</em></div>
+          <div className="stat"><b>{bn(living.length)}</b><span>জীবিত</span><em>মোটের {pct(living.length)}%</em></div>
+          <div className="stat"><b>{bn(dead)}</b><span>প্রয়াত</span><em>মোটের {pct(dead)}%</em></div>
+        </div>
+        <p className="muted small">মোট বংশধর {bn(lineage.length)} জন ধরে শতাংশ।</p>
+
+        <div className="card stages">
+          <h3>জীবনের পর্যায় অনুযায়ী</h3>
+          <div className="stage-tiles">
+            {STAGES.map(st => (
+              <div key={st.name} className="stage">
+                <b>{bn(st.n)}</b>
+                <span>{st.name}</span>
+                <small>{st.range}</small>
+                <em>{known.length ? `${bn(Math.round((st.n / known.length) * 100))}%` : '—'}</em>
+              </div>
+            ))}
+          </div>
+          <p className="muted small">
+            {known.length
+              ? `জন্মসাল জানা ${bn(known.length)} জন জীবিত সদস্যের মধ্যে শতাংশ।`
+              : 'জীবিত সদস্যদের জন্মসাল যোগ হলে এখানে হিসাব আসবে।'}
+            {noAge > 0 && ` আরও ${bn(noAge)} জনের জন্মসাল দেওয়া নেই।`}
+          </p>
         </div>
         <div className="card ages">
           <h3>বয়স অনুযায়ী জীবিত সদস্য</h3>
