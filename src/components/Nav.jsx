@@ -5,7 +5,7 @@ import { soundOn, setSoundOn, play } from '../lib/sound'
 
 const LINKS = [
   ['', 'হোম'], ['ancestors', 'পূর্বপুরুষ'], ['tree', 'বংশবৃক্ষ'], ['roots', 'আমার শিকড়'],
-  ['album', 'অ্যালবাম'], ['places', 'আত্মীয়দের এলাকা'], ['memorial', 'স্মরণ'], ['games', 'খেলা'],
+  ['album', 'অ্যালবাম'], ['writings', 'গান-কবিতা-গল্প'], ['places', 'আত্মীয়দের এলাকা'], ['memorial', 'যাদের হারিয়েছি'], ['games', 'গেইমশো'],
 ]
 
 export default function Nav({ page }) {

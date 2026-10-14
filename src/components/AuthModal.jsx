@@ -100,14 +100,14 @@ export default function AuthModal({ onClose }) {
                 </button>
               </span>
             </label>
-            <button className="btn" disabled={busy}>{busy ? 'অপেক্ষা করুন…' : mode === 'up' ? 'একাউন্ট খুলুন' : 'বাড়িতে প্রবেশ করুন'}</button>
+            <button className="btn auth-go" disabled={busy}>{busy ? 'অপেক্ষা করুন…' : mode === 'up' ? 'একাউন্ট খুলুন' : 'বাড়িতে প্রবেশ করুন'}</button>
           </>
         )}
         {msg && <p className="note">{msg}</p>}
 
         <p className="links">
           {mode !== 'in' && <button type="button" className="link" onClick={() => go('in')}>লগইন করুন</button>}
-          {mode !== 'up' && <button type="button" className="link" onClick={() => go('up')}>নতুন একাউন্ট খুলুন</button>}
+          {mode !== 'up' && <button type="button" className="link strong" onClick={() => go('up')}>নতুন একাউন্ট খুলুন</button>}
           {mode !== 'reset' && mode !== 'admin' && <button type="button" className="link" onClick={() => go('reset')}>পাসওয়ার্ড ভুলে গেছি</button>}
           {mode === 'in' && <button type="button" className="link muted" onClick={() => go('admin')}>এডমিন: ইমেইলে লগইন</button>}
         </p>

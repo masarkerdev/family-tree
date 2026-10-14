@@ -62,7 +62,7 @@ export default function Memorial() {
 
   return (
     <div className="inner">
-      <h1 className="page-title">স্মরণ</h1>
+      <h1 className="page-title">যাদের হারিয়েছি</h1>
       <p className="muted">যাঁরা আমাদের ছেড়ে চলে গেছেন, তাঁদের জন্য দোয়া। মাস অনুযায়ী সাজানো, চলতি মাস আগে।</p>
       {[...Array(12)].map((_, i) => {
         const mo = ((t.m - 1 + i) % 12) + 1

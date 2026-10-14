@@ -503,3 +503,32 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .form .pw-wrap input { padding-right: 46px }
 .pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); margin-top: 3px; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--mut); cursor: pointer }
 .pw-eye:hover, .pw-eye[aria-pressed="true"] { color: var(--pri); background: var(--soft) }
+
+/* লগইন ফর্ম */
+.form .auth-go { margin-top: 18px }
+.link.strong { font-weight: 700 }
+
+/* ---------- গান, কবিতা ও গল্প ---------- */
+.w-top { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 14px 0 }
+.w-search { flex: 1 1 220px; min-width: 0; padding: 11px 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); color: var(--fg); font: inherit }
+.w-tabs { display: flex; flex-wrap: wrap; max-width: 100% }
+.w-tabs small { opacity: .7; margin-left: 2px }
+.w-grid { margin-top: 6px }
+.w-card { display: flex; flex-direction: column; gap: 6px; text-align: left; font: inherit; color: var(--fg); cursor: pointer; border: 0; --k: var(--pri); box-shadow: inset 0 0 0 2px var(--line), inset 5px 0 0 var(--k); transition: transform .15s, box-shadow .15s }
+.w-card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 2px var(--k), inset 5px 0 0 var(--k) }
+.k-song { --k: #e84a86 } .k-poem { --k: #0f6b5c } .k-story { --k: #e8a33d } .k-other { --k: #6b6bd6 }
+.w-kind { font-size: 13px; font-weight: 600; color: var(--k) }
+.w-card h3 { margin: 0; font-size: 20px }
+.w-prev { margin: 0; white-space: pre-line; color: var(--mut); line-height: 1.6; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical }
+.w-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; margin-top: 4px }
+.w-auth { display: inline-flex; align-items: center; gap: 6px; font-weight: 600 }
+.w-pending h3 { margin-top: 0 }
+.reader h2 { margin: 6px 0 4px; font-size: clamp(24px, 5vw, 32px) }
+.w-by { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px }
+.w-text { white-space: pre-wrap; font-size: 18px; line-height: 1.9; padding: 16px 18px; border-radius: 16px; background: var(--soft); border-left: 5px solid var(--k); margin: 8px 0 14px }
+.k-story .w-text { text-align: justify }
+.kind-seg { display: flex; flex-wrap: wrap }
+.form .w-body { font-size: 17px; line-height: 1.8 }
+.btn.heart.on { background: color-mix(in srgb, #e84a86 18%, var(--card)); color: var(--fg); box-shadow: inset 0 0 0 2px #e84a86 }
+.btn.heart:not(.on) { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 2px var(--line) }
+.w-del { color: var(--bad) !important }

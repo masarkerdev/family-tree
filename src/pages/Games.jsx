@@ -220,7 +220,7 @@ export default function Games() {
   const g = GAMES.find(x => x.id === game)
   return (
     <div className="inner">
-      <h1 className="page-title">খেলা</h1>
+      <h1 className="page-title">গেইমশো</h1>
       <p className="muted">খেলতে খেলতে বংশের মানুষদের চিনে নিন। প্রতিটা সঠিক উত্তরে ১০ পয়েন্ট। আপনার মোট পয়েন্ট: <b>{bn(getPts())}</b></p>
       {g ? (
         g.id === 'pair' ? <PairGame key={g.id} onExit={() => setGame(null)} />
