@@ -456,3 +456,12 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .place-row:first-of-type { border-top: 0 }
 .place-kids { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0 4px 54px }
 @media (max-width: 480px) { .place-kids { margin-left: 0 } }
+
+/* ---------- আত্মীয়দের মানচিত্র ---------- */
+.rel-map { height: min(70vh, 620px); min-height: 360px; border-radius: 20px; overflow: hidden; margin: 14px 0 6px; box-shadow: inset 0 0 0 2px var(--line); background: var(--soft); z-index: 0 }
+.map-wait { display: grid; place-items: center; color: var(--mut) }
+.leaflet-tooltip.map-tip { background: var(--card); color: var(--fg); border: 0; border-radius: 8px; padding: 2px 8px; font: 600 12px 'Hind Siliguri', sans-serif; box-shadow: 0 1px 4px rgba(0,0,0,.25) }
+.leaflet-tooltip.map-tip.on { background: #e8a33d; color: #2a1020 }
+.leaflet-tooltip.map-tip.home { background: #e84a86; color: #fff }
+.leaflet-tooltip.map-tip::before { display: none }
+.leaflet-container { font-family: 'Hind Siliguri', sans-serif }

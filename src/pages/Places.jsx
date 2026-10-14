@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useApp } from '../ctx'
 import { bn } from '../lib/util'
 import { hasPlace } from '../lib/places'
 import { poss } from '../lib/kinship'
 import Avatar from '../components/Avatar'
+import { normDistrict, DISTRICT_COORDS } from '../lib/districtCoords'
+
+const RelativesMap = lazy(() => import('../components/RelativesMap'))
 
 // আত্মীয়দের এলাকা: বিয়ের সূত্রে আসা বউ ও জামাইদের বাড়ি জেলা ও উপজেলা ধরে
 export default function Places() {
@@ -22,7 +25,7 @@ export default function Places() {
     const withPlace = outs.filter(hasPlace).map(entry)
     const byD = new Map()
     for (const e of withPlace) {
-      const d = e.m.district || 'জেলা জানা নেই', u = e.m.upazila || 'উপজেলা জানা নেই'
+      const d = e.m.district ? normDistrict(e.m.district) : 'জেলা জানা নেই', u = e.m.upazila || 'উপজেলা জানা নেই'
       if (!byD.has(d)) byD.set(d, new Map())
       const byU = byD.get(d)
       if (!byU.has(u)) byU.set(u, [])
@@ -56,6 +59,13 @@ export default function Places() {
             <div className="stat"><b>{bn(nUp)}</b><span>উপজেলা</span></div>
             <div className="stat"><b>{bn(groups.reduce((s, g) => s + g.n, 0))}</b><span>পরিবারের সাথে আত্মীয়তা</span></div>
           </div>
+          <Suspense fallback={<div className="rel-map map-wait">মানচিত্র আসছে…</div>}>
+            <RelativesMap groups={groups} selected={district} onSelect={setDistrict} />
+          </Suspense>
+          {groups.some(g => !DISTRICT_COORDS[g.d]) && (
+            <p className="muted small">মানচিত্রে বসানো যায়নি: {groups.filter(g => !DISTRICT_COORDS[g.d]).map(g => g.d).join(', ')}। জেলার নামের বানান তালিকার সাথে মিলিয়ে দিন।</p>
+          )}
+          <p className="muted small">গোল চিহ্নে চাপলে নিচে শুধু সেই জেলার আত্মীয়রা দেখাবে। গোলাপি চিহ্ন আমাদের বাড়ি অলুয়া।</p>
           <div className="district-chips" role="group" aria-label="জেলা বাছুন">
             <button className={'chip' + (!district ? ' on' : '')} onClick={() => setDistrict(null)}>সব জেলা</button>
             {groups.map(g => (
