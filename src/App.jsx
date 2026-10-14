@@ -49,6 +49,7 @@ export default function App() {
   const hash = useHash()
   const [, page = '', arg] = hash.slice(1).split('/')
   const [session, setSession] = useState(null)
+  const [authReady, setAuthReady] = useState(false)   // লগইন আছে কিনা জানার আগে কিছু আটকানো হবে না
   const [role, setRole] = useState('visitor')
   const [data, setData] = useState({ members: [], marriages: [], content: {} })
   const [loading, setLoading] = useState(true)
@@ -84,7 +85,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    sb.auth.getSession().then(({ data }) => setSession(data.session))
+    sb.auth.getSession().then(({ data }) => { setSession(data.session); setAuthReady(true) })
     const { data: l } = sb.auth.onAuthStateChange((_e, s) => setSession(s))
     return () => l.subscription.unsubscribe()
   }, [])
@@ -99,8 +100,13 @@ export default function App() {
     else setRole('visitor')
   }, [session, reload, reloadClaims, reloadPhotos])
 
-  // শেয়ার করা লিংক (#/m/<id>) খুললে সেই সদস্যের পেইজ
-  useEffect(() => { if (page === 'm' && arg) setSheet({ mode: 'show', id: arg }) }, [page, arg])
+  // লগইন ছাড়া শুধু হোম পেইজ দেখা যাবে, তাতে কোনো লিংক বা বোতাম কাজ করবে না
+  const locked = authReady && !session
+
+  // শেয়ার করা লিংক (#/m/<id>) খুললে সেই সদস্যের পেইজ (লগইন থাকলে)
+  useEffect(() => { if (page === 'm' && arg && !locked && authReady) setSheet({ mode: 'show', id: arg }) }, [page, arg, locked, authReady])
+  // লগআউট করলে খোলা পেইজ বন্ধ
+  useEffect(() => { if (locked) setSheet(null) }, [locked])
 
   const fam = useMemo(() => buildFamily(data.members, data.marriages), [data])
   const uid = session?.user.id
@@ -119,16 +125,42 @@ export default function App() {
   const ctx = {
     fam, session, uid, me, role, isAdmin: role === 'admin', content: data.content, claims,
     reload, reloadClaims, close, photos, albumReady: album.ready, reloadPhotos,
-    open: id => setSheet({ mode: 'show', id }),
-    edit: id => setSheet({ mode: 'edit', id }),
+    open: id => (session ? setSheet({ mode: 'show', id }) : setAuth(true)),
+    edit: id => (session ? setSheet({ mode: 'edit', id }) : setAuth(true)),
     addNew: preset => (session ? setSheet({ mode: 'new', preset }) : setAuth(true)),
-    join: () => setSheet({ mode: 'join' }),
+    join: () => (session ? setSheet({ mode: 'join' }) : setAuth(true)),
     login: () => { setSheet(null); setAuth(true) },
+  }
+
+  // লগইন না থাকলে হোম ছাড়া সব পেইজের জায়গায় এই বার্তা
+  const gate = (
+    <div className="inner">
+      <div className="card lock-card">
+        <div className="lock-ico" aria-hidden="true">🔒</div>
+        <h2>এই পেইজ দেখতে লগইন করুন</h2>
+        <p className="muted">সরকার বংশের তথ্য শুধু পরিবারের সদস্যদের জন্য। একাউন্ট না থাকলে নাম ও মোবাইল নম্বর দিয়ে খুলুন, এডমিন অনুমতি দিলেই সব দেখতে পারবেন।</p>
+        <div className="actions center-actions">
+          <button className="btn" data-open onClick={() => setAuth(true)}>লগইন / নতুন একাউন্ট</button>
+          <a className="btn soft" data-open href="#/">হোম পেইজে ফিরুন</a>
+        </div>
+      </div>
+    </div>
+  )
+
+  // হোম পেইজে লগইন ছাড়া কোনো লিংক/বোতামে চাপলে কাজ না করে লগইনের ঘর খুলবে
+  const guard = e => {
+    if (!locked) return
+    const el = e.target.closest('a, button, [role="button"], input, select, label, summary')
+    if (!el || el.closest('[data-open]')) return
+    e.preventDefault()
+    e.stopPropagation()
+    setAuth(true)
   }
 
   let body
   if (loading) body = <div className="inner center"><p className="muted">লোড হচ্ছে…</p></div>
   else if (err) body = <div className="inner"><div className="card"><h3>তথ্য আনা যায়নি</h3><p className="muted">{err}</p><p className="small">.env ফাইলে Supabase-এর URL ও key ঠিক আছে কিনা, আর schema.sql চালানো হয়েছে কিনা দেখুন।</p></div></div>
+  else if (locked && page !== '') body = gate
   else if (page === 'ancestors') body = <Ancestors />
   else if (page === 'tree') body = <TreePage />
   else if (page === 'memorial') body = <Memorial />
@@ -142,12 +174,20 @@ export default function App() {
 
   return (
     <AppCtx.Provider value={ctx}>
-      <Nav page={page} />
-      <main>{body}</main>
-      <footer className="foot">
-        <p>সরকার বংশ · অলুয়া, ব্রাহ্মণপাড়া, কুমিল্লা</p>
-        <p className="muted small">ভুল তথ্য চোখে পড়লে নিজের পেইজ থেকে ঠিক করুন, অথবা এডমিনকে জানান।</p>
-      </footer>
+      <div onClickCapture={guard} className={locked ? 'locked' : undefined}>
+        <Nav page={page} />
+        {locked && page === '' && (
+          <div className="lock-bar" data-open>
+            <span>🔒 পুরো সাইট দেখতে লগইন করুন</span>
+            <button className="btn sm" onClick={() => setAuth(true)}>লগইন</button>
+          </div>
+        )}
+        <main>{body}</main>
+        <footer className="foot">
+          <p>সরকার বংশ · অলুয়া, ব্রাহ্মণপাড়া, কুমিল্লা</p>
+          <p className="muted small">ভুল তথ্য চোখে পড়লে নিজের পেইজ থেকে ঠিক করুন, অথবা এডমিনকে জানান।</p>
+        </footer>
+      </div>
       {sheet && (
         <Sheet onClose={close}>
           {sheet.mode === 'show' && <MemberSheet key={sheet.id} id={sheet.id} />}
