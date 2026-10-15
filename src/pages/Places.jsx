@@ -4,6 +4,7 @@ import { bn } from '../lib/util'
 import { hasPlace } from '../lib/places'
 import { poss } from '../lib/kinship'
 import Avatar from '../components/Avatar'
+import NearMe from '../components/NearMe'
 import { normDistrict, DISTRICT_COORDS } from '../lib/districtCoords'
 
 const RelativesMap = lazy(() => import('../components/RelativesMap'))
@@ -12,6 +13,7 @@ const RelativesMap = lazy(() => import('../components/RelativesMap'))
 export default function Places() {
   const { fam, open, isAdmin } = useApp()
   const [district, setDistrict] = useState(null)
+  const [me, setMe] = useState(null)   // আমার অবস্থান (শুধু এই ফোনে)
 
   const { groups, missing, hasCols } = useMemo(() => {
     const hasCols = fam.members.some(m => 'skills' in m)
@@ -59,8 +61,9 @@ export default function Places() {
             <div className="stat"><b>{bn(nUp)}</b><span>উপজেলা</span></div>
             <div className="stat"><b>{bn(groups.reduce((s, g) => s + g.n, 0))}</b><span>পরিবারের সাথে আত্মীয়তা</span></div>
           </div>
+          <NearMe groups={groups} onPlace={(at, place) => { setMe(at); if (place?.d && groups.some(g => g.d === place.d)) setDistrict(place.d) }} />
           <Suspense fallback={<div className="rel-map map-wait">মানচিত্র আসছে…</div>}>
-            <RelativesMap groups={groups} selected={district} onSelect={setDistrict} />
+            <RelativesMap groups={groups} selected={district} onSelect={setDistrict} me={me} />
           </Suspense>
           {groups.some(g => !DISTRICT_COORDS[g.d]) && (
             <p className="muted small">মানচিত্রে বসানো যায়নি: {groups.filter(g => !DISTRICT_COORDS[g.d]).map(g => g.d).join(', ')}। জেলার নামের বানান তালিকার সাথে মিলিয়ে দিন।</p>

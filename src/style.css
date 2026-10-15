@@ -579,3 +579,16 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 }
 .sup-num b { font-size: 22px; letter-spacing: .5px }
 .bkash { background: #e2136e; color: #fff; font-weight: 700; padding: 3px 10px; border-radius: 8px; font-size: 14px }
 @media (max-width: 560px) { .support { flex-direction: column; gap: 6px } }
+
+/* ---------- আমার কাছে কোন আত্মীয় ---------- */
+.near-me { background: linear-gradient(135deg, color-mix(in srgb, #2f7fe0 9%, var(--card)), var(--card)); box-shadow: inset 0 0 0 2px color-mix(in srgb, #2f7fe0 30%, var(--line)) }
+.nm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap }
+.nm-head h2 { margin: 0 0 4px }
+.nm-head .actions { margin: 0 }
+.near-me .btn.soft.on { box-shadow: inset 0 0 0 2px #2f7fe0; color: #2f7fe0; font-weight: 700 }
+.nm-where { font-size: 18px; margin: 14px 0 6px; padding: 10px 14px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 2px var(--line) }
+.nm-sub { margin: 14px 0 6px; font-size: 16px }
+.nm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px dashed var(--line); flex-wrap: wrap }
+.nm-row .person { flex: 1 1 240px; min-width: 0 }
+.nm-row .person small { display: block }
+.leaflet-tooltip.map-tip.me { background: #2f7fe0; color: #fff }

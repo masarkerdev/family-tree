@@ -3,23 +3,17 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { HOME } from '../lib/districtCoords'
 import { bn } from '../lib/util'
+import { N, loadGeo } from '../lib/geo'
 
 // শুধু বাংলাদেশের মানচিত্র: জেলা ও উপজেলার সীমানা (কোনো বিশ্ব-মানচিত্র টাইল নেই)
 // সীমানার তথ্য: geoBoundaries (geoboundaries.org), CC BY 4.0
 const BD = [[20.55, 87.95], [26.7, 92.75]]
-const N = s => String(s || '').normalize('NFC').replace(/উপজেলা|থানা/g, '').replace(/\u09C0/g, '\u09BF').replace(/\u09C2/g, '\u09C1').replace(/[\s\-.]+/g, '') // ী→ি, ূ→ু ধরে বানান মেলানো
-
-let geoCache = null
-const loadGeo = () => geoCache || (geoCache = Promise.all(
-  ['districts', 'upazilas'].map(f => fetch(`${import.meta.env.BASE_URL}geo/${f}.json`).then(r => { if (!r.ok) throw new Error(f); return r.json() }))
-).catch(e => { geoCache = null; throw e }))
-
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim()
 // আত্মীয় যত বেশি, সবুজ তত গাঢ়
 const shade = (n, max) => n ? `hsl(166, 60%, ${Math.round(78 - 48 * Math.min(1, Math.sqrt(n / Math.max(1, max))))}%)` : null
 
-export default function RelativesMap({ groups, selected, onSelect }) {
-  const box = useRef(), map = useRef(), layers = useRef({})
+export default function RelativesMap({ groups, selected, onSelect, me }) {
+  const box = useRef(), map = useRef(), layers = useRef({}), meDot = useRef(null)
   const [geo, setGeo] = useState(null)
   const [err, setErr] = useState(false)
 
@@ -105,6 +99,18 @@ export default function RelativesMap({ groups, selected, onSelect }) {
       if (b) m.flyToBounds(b, { padding: [30, 30], maxZoom: 9.5, duration: 0.6 })
     } else m.flyToBounds(BD, { duration: 0.6 })
   }, [geo, groups, selected, onSelect])
+
+  // আমার বর্তমান অবস্থান (নীল বিন্দু)
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    if (meDot.current) { meDot.current.remove(); meDot.current = null }
+    if (me) {
+      meDot.current = L.circleMarker(me, { radius: 9, color: '#fff', weight: 3, fillColor: '#2f7fe0', fillOpacity: 1 })
+        .bindTooltip('আপনি এখানে', { permanent: true, direction: 'top', offset: [0, -8], className: 'map-tip me' }).addTo(m)
+      meDot.current.bringToFront()
+    }
+  }, [me, geo, groups, selected])
 
   return (
     <div className="rel-map-wrap">
