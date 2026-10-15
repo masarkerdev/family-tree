@@ -117,6 +117,7 @@ function Content() {
   const [arrival, setArrival] = useState(c.content.arrival || '')
   const [amal, setAmal] = useState((c.content.amal || []).join('\n'))
   const [quotes, setQuotes] = useState(c.content.quotes || [])
+  const [sup, setSup] = useState(() => ({ number: '', kind: 'পার্সোনাল', note: '', ...(c.content.support || {}) }))
   const [msg, setMsg] = useState('')
   const save = async () => {
     const rows = [
@@ -124,6 +125,7 @@ function Content() {
       { key: 'arrival', value: arrival.trim() },
       { key: 'amal', value: amal.split('\n').map(s => s.trim()).filter(Boolean) },
       { key: 'quotes', value: quotes.filter(q => q.text?.trim()) },
+      { key: 'support', value: { number: sup.number.trim(), kind: sup.kind.trim(), note: sup.note.trim() } },
     ]
     const { error } = await sb.from('site_content').upsert(rows.map(r => ({ ...r, updated_at: new Date().toISOString() })))
     if (error) return alert(error.message)
@@ -133,6 +135,15 @@ function Content() {
   const setQ = (i, k, v) => setQuotes(qs => qs.map((q, j) => (j === i ? { ...q, [k]: v } : q)))
   return (
     <div className="form">
+      <fieldset>
+        <legend>🤝 শুভেচ্ছা মূল্য (বিকাশ)</legend>
+        <p className="muted small">নম্বর দিলে হোম পেইজের নিচে একটা কার্ড দেখাবে। খালি রাখলে কার্ড লুকানো থাকবে।</p>
+        <div className="two-col">
+          <label>বিকাশ নম্বর<input type="tel" value={sup.number} onChange={e => setSup(s => ({ ...s, number: e.target.value }))} placeholder="০১৭XXXXXXXX" /></label>
+          <label>একাউন্টের ধরন<input value={sup.kind} onChange={e => setSup(s => ({ ...s, kind: e.target.value }))} placeholder="পার্সোনাল" /></label>
+        </div>
+        <label>বার্তা (না দিলে একটা সাধারণ বার্তা দেখাবে)<textarea rows="2" value={sup.note} onChange={e => setSup(s => ({ ...s, note: e.target.value }))} /></label>
+      </fieldset>
       <label>হোমের উপরের ছোট লাইন (না দিলে দেখাবে না)
         <input value={arrival} onChange={e => setArrival(e.target.value)} placeholder="যেমন: অমুক সালে বংশের প্রথম পুরুষের অলুয়ায় আগমন" />
       </label>

@@ -1,3 +1,4 @@
+import SupportCard from '../components/SupportCard'
 import { useApp } from '../ctx'
 import { bn, MONTHS, today, dayNo, birthYear, honor } from '../lib/util'
 import Avatar from '../components/Avatar'
@@ -192,6 +193,8 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        <SupportCard />
       </div>
     </>
   )
