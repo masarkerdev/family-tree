@@ -36,6 +36,7 @@ export default function AuthModal({ onClose }) {
       login = phoneEmail(p)
     }
     if (mode === 'up' && name.trim().length < 3) return setMsg('পুরো নাম লিখুন।')
+    if (mode === 'up' && (/[A-Za-z]/.test(name) || !/[\u0980-\u09FF]/.test(name))) return setMsg('নামটা বাংলায় লিখুন, যেমন: মো. রাকিব সরকার। বংশতালিকার নাম বাংলায়, তাই মিলিয়ে নিতে সুবিধা হবে।')
 
     setBusy(true)
     let r
@@ -78,7 +79,7 @@ export default function AuthModal({ onClose }) {
           <p className="note">পাসওয়ার্ড ভুলে গেলে এডমিনকে আপনার মোবাইল নম্বর জানান। তিনি নতুন পাসওয়ার্ড দিয়ে দেবেন।</p>
         ) : (
           <>
-            {mode === 'up' && <label>আপনার নাম<input required value={name} onChange={e => setName(e.target.value)} autoComplete="name" placeholder="যেমন: মো. রাকিব সরকার" /></label>}
+            {mode === 'up' && <label>আপনার নাম (বাংলায়)<input lang="bn" required value={name} onChange={e => setName(e.target.value)} autoComplete="name" placeholder="যেমন: মো. রাকিব সরকার" /></label>}
             {mode === 'admin' ? (
               <label>ইমেইল<input type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" /></label>
             ) : (
